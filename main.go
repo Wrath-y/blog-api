@@ -1,13 +1,19 @@
 package go_blog
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/go-blog/go-blog/router"
+)
 
 func main() {
 	g := gin.New()
-	g.GET("ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		});
-	})
+
+	middlewares := []gin.HandlerFunc{}
+
+	router.Load(
+			g,
+			middlewares...,
+		)
+
 	g.Run()
 }
