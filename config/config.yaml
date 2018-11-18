@@ -1,0 +1,10 @@
+runmode: debug # debug, release, test
+port: :8081
+name: blog
+url: http://127.0.0.1:8081
+database:
+  name: blog
+  url: 127.0.0.1:3306
+  username: root
+  password: root
+mysqllog: true

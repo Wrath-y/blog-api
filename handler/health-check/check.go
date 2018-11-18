@@ -3,12 +3,13 @@ package health_check
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shirou/gopsutil@v2.17.12+incompatible/cpu"
-	"github.com/shirou/gopsutil@v2.17.12+incompatible/disk"
-	"github.com/shirou/gopsutil@v2.17.12+incompatible/load"
-	"github.com/shirou/gopsutil@v2.17.12+incompatible/mem"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/load"
+	"github.com/shirou/gopsutil/mem"
 )
 
 const (
@@ -52,6 +53,7 @@ func DiskCheck(c *gin.Context) {
 // CPUCheck checks the cpu usage.
 func CPUCheck(c *gin.Context) {
 	cores, _ := cpu.Counts(false)
+	usedPercent, _ := cpu.Percent(time.Second, false)
 
 	a, _ := load.Avg()
 	l1 := a.Load1
@@ -69,7 +71,7 @@ func CPUCheck(c *gin.Context) {
 		text = "WARNING"
 	}
 
-	message := fmt.Sprintf("%s - Load average: %.2f, %.2f, %.2f | Cores: %d", text, l1, l5, l15, cores)
+	message := fmt.Sprintf("%s - Load average: %.2f, %.2f, %.2f | Cores: %d | Used %f%%", text, l1, l5, l15, cores, usedPercent)
 	c.String(status, "\n"+message)
 }
 
