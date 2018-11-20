@@ -1,12 +1,12 @@
 package main
 
 import (
-	"go-blog/router"
-	"go-blog/config"
-	"go-blog/model"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go-blog/config"
+	"go-blog/model"
+	"go-blog/router"
 )
 
 var (

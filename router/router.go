@@ -2,8 +2,9 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-blog/model/article"
 	"net/http"
-	"go-blog/handler/health-check"
+	"go-blog/controller/healthCheckController"
 	"go-blog/router/middleware"
 )
 
@@ -19,12 +20,16 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		c.String(http.StatusNotFound, "路由错误")
 	})
 
-	hCheck := g.Group("/health-check")
+	hCheck := g.Group("/healthCheckController")
 	{
-		hCheck.GET("/health", health_check.HealthCheck)
-		hCheck.GET("/disk", health_check.DiskCheck)
-		hCheck.GET("/cpu", health_check.CPUCheck)
-		hCheck.GET("/ram", health_check.RAMCheck)
+		hCheck.GET("/health", healthCheckController.HealthCheck)
+		hCheck.GET("/disk", healthCheckController.DiskCheck)
+		hCheck.GET("/cpu", healthCheckController.CPUCheck)
+		hCheck.GET("/ram", healthCheckController.RAMCheck)
+	}
+	a := g.Group("articles")
+	{
+		a.POST("", article.Create)
 	}
 
 	return g

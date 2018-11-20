@@ -1,4 +1,4 @@
-package error
+package errno
 
 import "fmt"
 
@@ -34,10 +34,10 @@ func (err *Err) AddParams(format string, args ...interface{}) error {
 }
 
 func (err *Err) Error() string {
-	return fmt.Sprintf("Err - code: %d, message: %s, error: %s", err.Code, err.Message, err.Err)
+	return fmt.Sprintf("Err - code: %d, message: %s, errno: %s", err.Code, err.Message, err.Err)
 }
 
-func printErr(err error) (int, string) {
+func ReturnErr(err error) (int, string) {
 	if err == nil {
 		return Success.Code, Success.Message
 	}

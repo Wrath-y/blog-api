@@ -1,4 +1,4 @@
-package error
+package errno
 
 var (
 	Success	= &Errno{Code: 0, Message: "Success"}
