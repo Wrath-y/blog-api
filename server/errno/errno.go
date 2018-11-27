@@ -34,7 +34,7 @@ func (err *Err) AddParams(format string, args ...interface{}) error {
 }
 
 func (err *Err) Error() string {
-	return fmt.Sprintf("Err - code: %d, message: %s, errno: %s", err.Code, err.Message, err.Err)
+	return fmt.Sprintf("%s: %s", err.Message, err.Err)
 }
 
 func ReturnErr(err error) (int, string) {
@@ -44,7 +44,7 @@ func ReturnErr(err error) (int, string) {
 
 	switch typed := err.(type) {
 	case *Err:
-		return typed.Code, typed.Message
+		return typed.Code, typed.Error()
 	case *Errno:
 		return typed.Code, typed.Message
 	default:
