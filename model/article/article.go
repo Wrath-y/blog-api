@@ -4,27 +4,22 @@ import (
 	"fmt"
 	"net/http"
 
-	"go-blog/server/errno"
-
 	"github.com/gin-gonic/gin"
+	"go-blog/server/errno"
+	"go-blog/struct/articleStruct"
 )
 
 func Create(c *gin.Context) {
-	var r struct {
-		Title string `json:"title"`
-		Image string `json:"image"`
-		Html string `json:"html"`
-		Con string `json:"con"`
-	}
-
+	var r articleStruct.Request
 	var err error
 	if err := c.Bind(&r); err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": errno.ServerError})
+		c.JSON(http.StatusOK, gin.H{"error": errno.BindError})
+
 		return
 	}
 
 	if r.Title == "" {
-		err = errno.New(errno.ServerError, fmt.Errorf("title can not null"))
+		err = errno.New(errno.TitleError, fmt.Errorf("title can not null"))
 	}
 
 	code, message := errno.ReturnErr(err)
