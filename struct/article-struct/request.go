@@ -1,4 +1,4 @@
-package articleStruct
+package article_struct
 
 type Request struct {
 	Title string `json:"title"`
