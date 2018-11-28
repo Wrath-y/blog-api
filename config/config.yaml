@@ -6,5 +6,5 @@ database:
   name: blog
   url: 127.0.0.1:3306
   username: root
-  password:
+  password: 
 mysqllog: true

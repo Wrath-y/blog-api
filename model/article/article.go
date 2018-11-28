@@ -1,43 +1,71 @@
 package article
 
 import (
-	"github.com/gin-gonic/gin"
-	"go-blog/server/errno"
-	"go-blog/struct"
+	"go-blog/dao/article-dao"
 	"go-blog/struct/article-struct"
-	"reflect"
+	"sync"
 )
 
-func Create(c *gin.Context) {
-	var r article_struct.Request
-	var err error
-	if err := c.Bind(&r); err != nil {
-		_struct.Response(c, errno.BindError, nil)
+type ArticleModel struct {
+	Id 	  uint64 `json:"id"`
+	Title string `json:"title"`
+	Image string `json:"image"`
+	Html  string `json:"html"`
+	Con   string `json:"con"`
+}
 
-		return
+func Index(offset, limit int) ([]*article_struct.ArticleInfo, uint64, error) {
+	infos := make([]*article_struct.ArticleInfo, 0)
+	articles, count, err := article_dao.List(offset, limit)
+	if err != nil {
+		return nil, count, err
 	}
-	t := reflect.TypeOf(r)
-	v := reflect.ValueOf(r)
-	for k := 0; k < t.NumField(); k++ {
-		switch t.Field(k).Type.String() {
-		case "string":
-			if v.Field(k).String() == "" {
-				err = errno.New(errno.RequestError, " "+t.Field(k).Name + " can not be null")
-				_struct.Response(c, err, nil)
 
-				return
+	ids := []uint64{}
+	for _, article := range articles {
+		ids = append(ids, article.Id)
+	}
+
+	wg := sync.WaitGroup{}
+	articleList := article_struct.List{
+		Lock:	new(sync.Mutex),
+		IdMap:	make(map[uint64]*article_struct.ArticleInfo, len(articles)),
+	}
+
+	errChan := make(chan error, 1)
+	finished := make(chan bool, 1)
+
+	for _, a := range articles {
+		wg.Add(1)
+		go func(a *ArticleModel) {
+			defer wg.Done()
+
+			articleList.Lock.Lock()
+			defer articleList.Lock.Unlock()
+			articleList.IdMap[a.Id] = &article_struct.ArticleInfo{
+				Id:		a.Id,
+				Title:	a.Title,
+				Image:  a.Image,
+				Html:   a.Html,
+				Con:	a.Con,
 			}
-		}
+		}(a)
 	}
 
-	res := article_struct.Response{
-		Title: r.Title,
-		Image: r.Image,
-		Html: r.Html,
-		Con: r.Con,
+	go func() {
+		wg.Wait()
+		close(finished)
+	}()
+
+	select {
+	case <-finished:
+	case err := <-errChan:
+		return nil, count, err
 	}
 
-	_struct.Response(c, nil, res)
+	for _, id := range ids {
+		infos = append(infos, articleList.IdMap[id])
+	}
 
-	return
+	return infos, count, nil
 }
