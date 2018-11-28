@@ -1,6 +1,8 @@
 package errno
 
-import "fmt"
+import (
+	"bytes"
+)
 
 type Errno struct {
 	Code int
@@ -14,10 +16,10 @@ func (err Errno) Error() string {
 type Err struct {
 	Code int
 	Message string
-	Err error
+	Err string
 }
 
-func New(errno *Errno, err error) *Err {
+func New(errno *Errno, err string) *Err {
 	return &Err{Code: errno.Code, Message: errno.Message, Err:err}
 }
 
@@ -27,14 +29,22 @@ func (err *Err) Add(message string) error {
 	return err
 }
 
-func (err *Err) AddParams(format string, args ...interface{}) error {
-	err.Message += " " + fmt.Sprintf(format, args...)
+func (err *Err) AddParam(param string) error {
+	var buffer bytes.Buffer
+	buffer.WriteString(err.Message)
+	buffer.WriteString(" ")
+	buffer.WriteString(param)
+	err.Message = buffer.String()
 
 	return err
 }
 
 func (err *Err) Error() string {
-	return fmt.Sprintf("%s: %s", err.Message, err.Err)
+	var buffer bytes.Buffer
+	buffer.WriteString(err.Message)
+	buffer.WriteString(err.Err)
+
+	return buffer.String()
 }
 
 func ReturnErr(err error) (int, string) {
