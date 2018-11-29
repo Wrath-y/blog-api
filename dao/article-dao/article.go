@@ -5,26 +5,26 @@ import (
 )
 
 type Articles struct {
-	Id 	  uint64 `json:"id"`
+	Id 	  int `json:"id"`
 	Title string `json:"title"`
 	Image string `json:"image"`
 	Html  string `json:"html"`
 	Con   string `json:"con"`
 }
 
-func List(offset, limit int) ([]*Articles, uint64, error) {
+func List(page, limit int) ([]*Articles, int, error) {
 	if limit == 0 {
 		limit = 6
 	}
 
 	articles := make([]*Articles, 0)
-	var count uint64
+	var count int
 
 	if err := model.DB.Self.Model(&Articles{}).Count(&count).Error; err != nil {
 		return articles, count, err
 	}
 
-	if err := model.DB.Self.Offset(offset).Limit(limit).Order("id desc").Find(&articles).Error; err != nil {
+	if err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&articles).Error; err != nil {
 		return articles, count, err
 	}
 

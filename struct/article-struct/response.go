@@ -1,9 +1,11 @@
 package article_struct
 
-import "sync"
+import (
+	"sync"
+)
 
 type Article struct {
-	Id 	  uint64 `json:"id"`
+	Id 	  int `json:"id"`
 	Title string `json:"title"`
 	Image string `json:"image"`
 	Html  string `json:"html"`
@@ -12,5 +14,10 @@ type Article struct {
 
 type List struct {
 	Lock  *sync.Mutex
-	IdMap map[uint64]*Article
+	IdMap map[int]*Article
+}
+
+type Response struct {
+	Count int	 `json:"count"`
+	Data  []*Article `json:"data"`
 }

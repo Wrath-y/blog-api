@@ -6,14 +6,14 @@ import (
 	"sync"
 )
 
-func Index(offset, limit int) ([]*article_struct.Article, uint64, error) {
-	infos := make([]*article_struct.Article, 0)
-	articles, count, err := article_dao.List(offset, limit)
+func Index(page, limit int) ([]*article_struct.Article, int, error) {
+	data := make([]*article_struct.Article, 0)
+	articles, count, err := article_dao.List(page, limit)
 	if err != nil {
 		return nil, count, err
 	}
 
-	ids := []uint64{}
+	ids := []int{}
 	for _, article := range articles {
 		ids = append(ids, article.Id)
 	}
@@ -21,7 +21,7 @@ func Index(offset, limit int) ([]*article_struct.Article, uint64, error) {
 	wg := sync.WaitGroup{}
 	articleList := article_struct.List{
 		Lock:	new(sync.Mutex),
-		IdMap:	make(map[uint64]*article_struct.Article, len(articles)),
+		IdMap:	make(map[int]*article_struct.Article, len(articles)),
 	}
 
 	errChan := make(chan error, 1)
@@ -56,8 +56,8 @@ func Index(offset, limit int) ([]*article_struct.Article, uint64, error) {
 	}
 
 	for _, id := range ids {
-		infos = append(infos, articleList.IdMap[id])
+		data = append(data, articleList.IdMap[id])
 	}
 
-	return infos, count, nil
+	return data, count, nil
 }

@@ -14,11 +14,11 @@ type Database struct {
 var DB *Database
 
 func openDB(username, password, url, name string) *gorm.DB {
-	config := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=%t&loc=%s",
-		username, password, url, name, true, "Asia/Shanghai")
+	config := fmt.Sprintf("%s:%s@tcp(%s)/%s",
+		username, password, url, name)
 	db, err := gorm.Open("mysql", config)
 	if err != nil {
-		fmt.Sprint("数据库连接失败")
+		panic(err)
 	}
 
 	setupDB(db)

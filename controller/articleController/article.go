@@ -7,6 +7,7 @@ import (
 	"go-blog/struct"
 	"go-blog/struct/article-struct"
 	"reflect"
+	"strconv"
 )
 
 func Store(c *gin.Context) {
@@ -52,7 +53,21 @@ func Update(c *gin.Context) {
 }
 
 func Index(c *gin.Context) {
-	article.Index(0, 6)
+	page, err:= strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		panic(err)
+	}
+	data, count, err := article.Index(page, 6)
+
+	if err != nil {
+		_struct.Response(c, err, nil)
+		return
+	}
+
+	_struct.Response(c, nil, article_struct.Response{
+		Count: count,
+		Data:   data,
+	})
 
 	return
 }
