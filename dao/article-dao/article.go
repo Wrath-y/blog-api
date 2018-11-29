@@ -2,21 +2,25 @@ package article_dao
 
 import (
 	"go-blog/model"
-	"go-blog/model/article"
-	"go-blog/struct/article-struct"
 )
 
+type Articles struct {
+	Id 	  uint64 `json:"id"`
+	Title string `json:"title"`
+	Image string `json:"image"`
+	Html  string `json:"html"`
+	Con   string `json:"con"`
+}
 
-
-func List(offset, limit int) ([]*article.ArticleModel, uint64, error) {
+func List(offset, limit int) ([]*Articles, uint64, error) {
 	if limit == 0 {
 		limit = 6
 	}
 
-	articles := make([]*article.ArticleModel, 0)
+	articles := make([]*Articles, 0)
 	var count uint64
 
-	if err := model.DB.Self.Model(&article.ArticleModel{}).Count(&count).Error; err != nil {
+	if err := model.DB.Self.Model(&Articles{}).Count(&count).Error; err != nil {
 		return articles, count, err
 	}
 

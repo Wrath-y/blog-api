@@ -28,7 +28,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		hc.GET("/cpu", healthCheckController.CPUCheck)
 		hc.GET("/ram", healthCheckController.RAMCheck)
 	}
-	a := g.Group("article-dao")
+	a := g.Group("articles")
 	{
 		a.POST("", articleController.Store)
 		a.DELETE("/:id", articleController.Delete)

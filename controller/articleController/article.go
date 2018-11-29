@@ -2,6 +2,7 @@ package articleController
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-blog/model/article"
 	"go-blog/server/errno"
 	"go-blog/struct"
 	"go-blog/struct/article-struct"
@@ -30,7 +31,7 @@ func Store(c *gin.Context) {
 		}
 	}
 
-	res := article_struct.ArticleInfo{
+	res := article_struct.Article{
 		Title: r.Title,
 		Image: r.Image,
 		Html: r.Html,
@@ -51,7 +52,9 @@ func Update(c *gin.Context) {
 }
 
 func Index(c *gin.Context) {
+	article.Index(0, 6)
 
+	return
 }
 
 func Show(c *gin.Context) {

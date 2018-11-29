@@ -6,16 +6,8 @@ import (
 	"sync"
 )
 
-type ArticleModel struct {
-	Id 	  uint64 `json:"id"`
-	Title string `json:"title"`
-	Image string `json:"image"`
-	Html  string `json:"html"`
-	Con   string `json:"con"`
-}
-
-func Index(offset, limit int) ([]*article_struct.ArticleInfo, uint64, error) {
-	infos := make([]*article_struct.ArticleInfo, 0)
+func Index(offset, limit int) ([]*article_struct.Article, uint64, error) {
+	infos := make([]*article_struct.Article, 0)
 	articles, count, err := article_dao.List(offset, limit)
 	if err != nil {
 		return nil, count, err
@@ -29,7 +21,7 @@ func Index(offset, limit int) ([]*article_struct.ArticleInfo, uint64, error) {
 	wg := sync.WaitGroup{}
 	articleList := article_struct.List{
 		Lock:	new(sync.Mutex),
-		IdMap:	make(map[uint64]*article_struct.ArticleInfo, len(articles)),
+		IdMap:	make(map[uint64]*article_struct.Article, len(articles)),
 	}
 
 	errChan := make(chan error, 1)
@@ -37,12 +29,12 @@ func Index(offset, limit int) ([]*article_struct.ArticleInfo, uint64, error) {
 
 	for _, a := range articles {
 		wg.Add(1)
-		go func(a *ArticleModel) {
+		go func(a *article_dao.Articles) {
 			defer wg.Done()
 
 			articleList.Lock.Lock()
 			defer articleList.Lock.Unlock()
-			articleList.IdMap[a.Id] = &article_struct.ArticleInfo{
+			articleList.IdMap[a.Id] = &article_struct.Article{
 				Id:		a.Id,
 				Title:	a.Title,
 				Image:  a.Image,

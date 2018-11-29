@@ -2,7 +2,7 @@ package article_struct
 
 import "sync"
 
-type ArticleInfo struct {
+type Article struct {
 	Id 	  uint64 `json:"id"`
 	Title string `json:"title"`
 	Image string `json:"image"`
@@ -12,5 +12,5 @@ type ArticleInfo struct {
 
 type List struct {
 	Lock  *sync.Mutex
-	IdMap map[uint64]*ArticleInfo
+	IdMap map[uint64]*Article
 }
