@@ -5,4 +5,5 @@ type Request struct {
 	Image string `json:"image"`
 	Html  string `json:"html"`
 	Con   string `json:"con"`
+	Tag   string `json:"tag"'`
 }

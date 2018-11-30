@@ -18,6 +18,7 @@ func Store(c *gin.Context) {
 
 		return
 	}
+
 	t := reflect.TypeOf(r)
 	v := reflect.ValueOf(r)
 	for k := 0; k < t.NumField(); k++ {
@@ -32,14 +33,19 @@ func Store(c *gin.Context) {
 		}
 	}
 
-	res := article_struct.Article{
+	res := article.Articles{
 		Title: r.Title,
 		Image: r.Image,
 		Html: r.Html,
 		Con: r.Con,
+		Tag: r.Tag,
+	}
+	if err := res.Create(); err != nil {
+		_struct.Response(c, errno.DatabaseError, nil)
+		return
 	}
 
-	_struct.Response(c, nil, res)
+	_struct.Response(c, err, res)
 
 	return
 }
