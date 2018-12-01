@@ -17,6 +17,19 @@ func (a *Articles) Create() error {
 	return model.DB.Self.Create(a).Error
 }
 
+func Delete(id int) error {
+	a := Articles{}
+	a.Id = id
+
+	return model.DB.Self.Delete(a).Error
+}
+
+func (a *Articles) Update(id int) error {
+	a.Id = id
+
+	return model.DB.Self.Save(a).Error
+}
+
 func Index(page, limit int) ([]*Articles, int, error) {
 	if limit == 0 {
 		limit = 6
@@ -34,4 +47,13 @@ func Index(page, limit int) ([]*Articles, int, error) {
 	}
 
 	return articles, count, nil
+}
+
+func Show(id int) (*Articles, error) {
+	articles := &Articles{}
+	if err := model.DB.Self.First(&articles, id).Error; err != nil {
+		return articles, err
+	}
+
+	return articles, nil
 }

@@ -6,34 +6,24 @@ import (
 	"go-blog/server/errno"
 	"go-blog/struct"
 	"go-blog/struct/article-struct"
-	"reflect"
 	"strconv"
 )
 
 func Store(c *gin.Context) {
 	var r article_struct.Request
-	var err error
 	if err := c.Bind(&r); err != nil {
 		_struct.Response(c, errno.BindError, nil)
 
 		return
 	}
 
-	t := reflect.TypeOf(r)
-	v := reflect.ValueOf(r)
-	for k := 0; k < t.NumField(); k++ {
-		switch t.Field(k).Type.String() {
-		case "string":
-			if v.Field(k).String() == "" {
-				err = errno.New(errno.RequestError, " "+t.Field(k).Name + " can not be null")
-				_struct.Response(c, err, nil)
+	if err := r.Validate(c); err != nil {
+		_struct.Response(c, err, nil)
 
-				return
-			}
-		}
+		return
 	}
 
-	res := article.Articles{
+	res := &article.Articles{
 		Title: r.Title,
 		Image: r.Image,
 		Html: r.Html,
@@ -45,17 +35,55 @@ func Store(c *gin.Context) {
 		return
 	}
 
-	_struct.Response(c, err, res)
+	_struct.Response(c, nil, res)
 
 	return
 }
 
 func Delete(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
 
+	if err := article.Delete(id); err != nil {
+		_struct.Response(c, errno.DatabaseError, nil)
+
+		return
+	}
+
+	_struct.Response(c, nil, nil)
+
+	return
 }
 
 func Update(c *gin.Context) {
+	var r article_struct.Request
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err := c.Bind(&r); err != nil {
+		_struct.Response(c, errno.BindError, nil)
 
+		return
+	}
+
+	if err := r.Validate(c); err != nil {
+		_struct.Response(c, err, nil)
+
+		return
+	}
+
+	res := &article.Articles{
+		Title: r.Title,
+		Image: r.Image,
+		Html: r.Html,
+		Con: r.Con,
+		Tag: r.Tag,
+	}
+	if err := res.Update(id); err != nil {
+		_struct.Response(c, errno.DatabaseError, nil)
+		return
+	}
+
+	_struct.Response(c, nil, res)
+
+	return
 }
 
 func Index(c *gin.Context) {
@@ -79,5 +107,14 @@ func Index(c *gin.Context) {
 }
 
 func Show(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	res, err := article.Show(id)
+	if err != nil {
+		_struct.Response(c, errno.DatabaseError, nil)
 
+		return
+	}
+	_struct.Response(c, nil, res)
+
+	return
 }

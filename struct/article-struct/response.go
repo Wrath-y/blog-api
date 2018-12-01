@@ -1,6 +1,8 @@
 package article_struct
 
-import "go-blog/model/article"
+import (
+	"go-blog/model/article"
+)
 
 type Response struct {
 	Count int	 `json:"count"`
