@@ -91,7 +91,7 @@ func Index(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data, count, err := article.Index(page, 6)
+	data, count, err := article.Index(page, 15)
 
 	if err != nil {
 		_struct.Response(c, err, nil)

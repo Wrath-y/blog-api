@@ -1,7 +1,7 @@
 runmode: debug # debug, release, test
-port: :8081
+port: :8080
 name: blog
-url: http://127.0.0.1:8081
+url: http://127.0.0.1:8080
 database:
   name: blog
   url: 127.0.0.1:3306
@@ -9,3 +9,8 @@ database:
   password: 
   params: charset=utf8&parseTime=True&loc=Asia/Shanghai
 mysqllog: true
+# 阿里云
+endpoint: http://oss-cn-hongkong.aliyuncs.com
+accessKeyId:
+accessKeySecret:
+bucketName: gilgamesh

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller/articleController"
 	"go-blog/controller/healthCheckController"
+	"go-blog/controller/uploadController"
 	"go-blog/router/middleware"
 	"go-blog/server/errno"
 	"go-blog/struct"
@@ -12,10 +13,8 @@ import (
 func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 	// middleware
 	g.Use(gin.Recovery())
-	g.Use(gin.Logger())
 	g.Use(middleware.NoCache)
 	g.Use(middleware.Options)
-	g.Use(middleware.Secure)
 	g.Use(mw...)
 	g.NoRoute(func(c *gin.Context) {
 		_struct.Response(c, errno.RouteError, nil)
@@ -35,6 +34,11 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		a.PUT("/:id", articleController.Update)
 		a.GET("", articleController.Index)
 		a.GET("/:id", articleController.Show)
+	}
+	u := g.Group("upload")
+	{
+		u.GET("", uploadController.Index)
+		u.POST("", uploadController.Create)
 	}
 
 	return g
