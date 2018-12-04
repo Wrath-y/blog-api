@@ -35,10 +35,9 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		a.GET("", articleController.Index)
 		a.GET("/:id", articleController.Show)
 	}
-	u := g.Group("upload")
+	u := g.Group("uploads")
 	{
 		u.GET("", uploadController.Index)
-		u.POST("", uploadController.Create)
 	}
 
 	return g

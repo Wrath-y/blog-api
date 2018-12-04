@@ -7,12 +7,8 @@ import (
 )
 
 func Index(c *gin.Context) {
-	data := upload.Version()
+	data := upload.GetSign(c)
 	_struct.Response(c, nil, data)
 
 	return
-}
-
-func Create(c *gin.Context) {
-	upload.Create(c)
 }
