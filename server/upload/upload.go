@@ -1,64 +1,114 @@
 package upload
 
 import (
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/gin-gonic/gin"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"github.com/spf13/viper"
-	"go-blog/server/errno"
-	"go-blog/struct"
+	"hash"
+	"strconv"
 	"time"
 )
 
-func Version() string {
-	return "OSS Go SDK Version: " + oss.Version
+// 请填写您的AccessKeyId。
+var accessKeyId string = viper.GetString("accessKeyId")
+// 请填写您的AccessKeySecret。
+var accessKeySecret string = viper.GetString("accessKeySecret")
+// host的格式为 bucketname.endpoint ，请替换为您的真实信息。
+var host string = viper.GetString("host")
+// callbackUrl为 上传回调服务器的URL，请将下面的IP和Port配置为您自己的真实信息。
+var callbackUrl string = "http://88.88.88.88:8888";
+// 用户上传文件时指定的前缀。
+var upload_dir string = ""
+var expire_time int64 = 30
+
+const (
+	base64Table = "123QRSTUabcdVWXYZHijKLAWDCABDstEFGuvwxyzGHIJklmnopqr234560178912"
+)
+
+var coder = base64.NewEncoding(base64Table)
+
+func get_gmt_iso8601(expire_end int64) string {
+	var tokenExpire = time.Unix(expire_end, 0).Format("2006-01-02T15:04:05Z")
+	return tokenExpire
 }
 
-func GetSign(c *gin.Context) interface{} {
-	conditions := make([]map[int]string, 2)
-	conditions[0] = make(map[int]string)
-	conditions[1] = make(map[int]string)
-	conditions[0][0] = "content-length-range"
-	conditions[0][1] = "0"
-	conditions[0][2] = "1048576000"
-	conditions[1][0] = "starts-with"
-	conditions[1][1] = "$key"
-	conditions[1][2] = ""
-
-
-	now := time.Now()
-	expire, _ := time.ParseDuration("30s")
-	after := now.Add(expire)
-
-	arr := make(map[string]interface{})
-	arr["expiration"] = after.Format("2006-01-02T15:04:05Z")
-	arr["conditions"] = conditions
-
-	return arr
+type ConfigStruct struct{
+	Expiration string `json:"expiration"`
+	Conditions [][]string `json:"conditions"`
 }
 
-func Create(c *gin.Context) {
-	panic(c.Request.Body)
-	objectName := c.Param("title") + time.Now().Format("2006-01-02 15:04:05")
-	localFileName := "<yourLocalFileName>"
-	// 创建OSSClient实例。
-	client, err := oss.New(viper.GetString("endpoint"), viper.GetString("accessKeyId"), viper.GetString("accessKeySecret"))
-	if err != nil {
-		_struct.Response(c, errno.UploadError, nil)
+type PolicyToken struct{
+	AccessKeyId string `json:"accessid"`
+	Host string `json:"host"`
+	Expire int64 `json:"expire"`
+	Signature string `json:"signature"`
+	Policy string `json:"policy"`
+	Directory string `json:"dir"`
+	Callback string `json:"callback"`
+}
 
-		return
-	}
-	// 获取存储空间。
-	bucket, err := client.Bucket(viper.GetString("bucketName"))
-	if err != nil {
-		_struct.Response(c, errno.UploadError, nil)
+type CallbackParam struct{
+	CallbackUrl string `json:"callbackUrl"`
+	CallbackBody string `json:"callbackBody"`
+	CallbackBodyType string `json:"callbackBodyType"`
+}
 
-		return
-	}
-	// 上传文件。
-	err = bucket.PutObjectFromFile(objectName, localFileName)
-	if err != nil {
-		_struct.Response(c, errno.UploadError, nil)
+func GetPolicyToken() string {
+	now := time.Now().Unix()
+	expire_end := now + expire_time
+	var tokenExpire = get_gmt_iso8601(expire_end)
 
-		return
+	//create post policy json
+	var config ConfigStruct
+	config.Expiration = tokenExpire
+	var condition []string
+	condition = append(condition, "starts-with")
+	condition = append(condition, "$key")
+	condition = append(condition, upload_dir)
+	config.Conditions = append(config.Conditions, condition)
+
+	//calucate signature
+	result, err := json.Marshal(config)
+	debyte := base64.StdEncoding.EncodeToString(result)
+	h := hmac.New(func() hash.Hash { return sha1.New() }, []byte(accessKeySecret))
+
+	signedStr := base64.StdEncoding.EncodeToString(h.Sum(nil))
+
+	var callbackParam CallbackParam
+	callbackParam.CallbackUrl = callbackUrl
+	callbackParam.CallbackBody = "filename=${object}&size=${size}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}"
+	callbackParam.CallbackBodyType = "application/x-www-form-urlencoded"
+	callback_str, err := json.Marshal(callbackParam)
+	if err != nil {
+		fmt.Println("callback json err:", err)
 	}
+	callbackBase64 := base64.StdEncoding.EncodeToString(callback_str)
+
+	var policyToken PolicyToken
+	policyToken.AccessKeyId = accessKeyId
+	policyToken.Host = host
+	policyToken.Expire = expire_end
+	policyToken.Signature = string(signedStr)
+	policyToken.Directory = upload_dir
+	policyToken.Policy = string(debyte)
+	policyToken.Callback = string(callbackBase64)
+	response, err := json.Marshal(policyToken)
+	if err != nil {
+		fmt.Println("json err:", err)
+	}
+
+	return string(response)
+}
+
+type EscapeError string
+func (e EscapeError) Error() string {
+	return "invalid URL escape " + strconv.Quote(string(e))
+}
+
+type InvalidHostError string
+func (e InvalidHostError) Error() string {
+	return "invalid character " + strconv.Quote(string(e)) + " in host name"
 }

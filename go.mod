@@ -4,7 +4,6 @@ require (
 	cloud.google.com/go v0.33.1 // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
-	github.com/aliyun/aliyun-oss-go-sdk v0.0.0-20181116160301-c6838fdc33ed
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
@@ -26,7 +25,6 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.2.1
 	github.com/stretchr/testify v1.2.2 // indirect
-	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/ugorji/go/codec v0.0.0-20180920200043-2c86ab75771c // indirect
 	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869 // indirect
 	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a // indirect

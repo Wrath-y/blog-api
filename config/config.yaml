@@ -10,7 +10,7 @@ database:
   params: charset=utf8&parseTime=True&loc=Asia/Shanghai
 mysqllog: true
 # 阿里云
-endpoint: http://oss-cn-hongkong.aliyuncs.com
+uploadUrl: http://gilgamesh.oss-cn-hongkong.aliyuncs.com
 accessKeyId:
 accessKeySecret:
 bucketName: gilgamesh
