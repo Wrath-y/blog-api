@@ -11,6 +11,12 @@ type Database struct {
 	Self   *gorm.DB
 }
 
+type Base struct {
+	Id 	  		int     `json:"id"`
+	UpdatedAt 	string  `json:"updated_at"`
+	CreatedAt 	string  `json:"created_at"`
+}
+
 var DB *Database
 
 func openDB(username, password, url, name string) *gorm.DB {

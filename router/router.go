@@ -5,6 +5,7 @@ import (
 	"go-blog/controller/articleController"
 	"go-blog/controller/healthCheckController"
 	"go-blog/controller/uploadController"
+	"go-blog/controller/userController"
 	"go-blog/router/middleware"
 	"go-blog/server/errno"
 	"go-blog/struct"
@@ -20,24 +21,25 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		_struct.Response(c, errno.RouteError, nil)
 	})
 
-	hc := g.Group("/health-check")
+	g.POST("/login", userController.Login)
+	hc := g.Group("/health-checks")
 	{
 		hc.GET("", healthCheckController.HealthCheck)
 		hc.GET("/disk", healthCheckController.DiskCheck)
 		hc.GET("/cpu", healthCheckController.CPUCheck)
 		hc.GET("/ram", healthCheckController.RAMCheck)
 	}
-	a := g.Group("articles")
+	articles := g.Group("articles")
 	{
-		a.POST("", articleController.Store)
-		a.DELETE("/:id", articleController.Delete)
-		a.PUT("/:id", articleController.Update)
-		a.GET("", articleController.Index)
-		a.GET("/:id", articleController.Show)
+		articles.POST("", articleController.Store)
+		articles.DELETE("/:id", articleController.Delete)
+		articles.PUT("/:id", articleController.Update)
+		articles.GET("", articleController.Index)
+		articles.GET("/:id", articleController.Show)
 	}
-	u := g.Group("uploads")
+	uploads := g.Group("uploads")
 	{
-		u.GET("", uploadController.Index)
+		uploads.GET("", uploadController.Index)
 	}
 
 	return g

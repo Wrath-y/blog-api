@@ -7,11 +7,13 @@ import (
 )
 
 type Request struct {
-	Title string `json:"title"`
-	Image string `json:"image"`
-	Html  string `json:"html"`
-	Con   string `json:"con"`
-	Tag   string `json:"tag"'`
+	Title 		string  `json:"title"`
+	Image 		string  `json:"image"`
+	Html  		string  `json:"html"`
+	Con   		string  `json:"con"`
+	Tag   		string  `json:"tag"`
+	Status		int     `json:"status"`
+	Source		int     `json:"source"`
 }
 
 func (r Request) Validate(c *gin.Context) error {
