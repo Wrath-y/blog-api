@@ -7,5 +7,5 @@ import (
 func GetUserByName(account string) (*Administrators, error) {
  	a := &Administrators{}
 
- 	return a, model.DB.Self.Where("account = ?", account).Error
+ 	return a, model.DB.Self.Where("account = ?", account).First(&a).Error
 }

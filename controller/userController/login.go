@@ -2,6 +2,7 @@ package userController
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-blog/model"
 	"go-blog/model/administrator"
 	"go-blog/server/auth"
 	"go-blog/server/errno"
@@ -26,18 +27,26 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	if err != nil {
+		_struct.Response(c, errno.ServerError, nil)
+
+		return
+	}
+
 	// Compare the login password with the administrator password.
 	if err := auth.Compare(a.Password, r.Password); err != nil {
 		_struct.Response(c, errno.ErrPasswordIncorrect, nil)
-		return
 	}
 
 	// Sign the json web token.
-	t, err := token.Sign(c, token.Context{ID: a.Id, Username: a.Username}, "")
+	t, err := token.Sign(c, token.Context{ID: a.Id, Account: a.Account}, "")
 	if err != nil {
 		_struct.Response(c, errno.ErrToken, nil)
+
 		return
 	}
 
-	SendResponse(c, nil, model.Token{Token: t})
+	_struct.Response(c, nil, model.Token{Token: t})
+
+	return
 }

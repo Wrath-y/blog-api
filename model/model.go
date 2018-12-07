@@ -17,6 +17,10 @@ type Base struct {
 	CreatedAt 	string  `json:"created_at"`
 }
 
+type Token struct {
+	Token string `json:"token"`
+}
+
 var DB *Database
 
 func openDB(username, password, url, name string) *gorm.DB {

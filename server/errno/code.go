@@ -8,6 +8,8 @@ var (
 	UploadError = &Errno{Code: 10004, Message: "Upload Error"}
 	BindError = &Errno{Code: 20001, Message: "Bind Error"}
 	RequestError = &Errno{Code: 20002, Message: "Request Error"}
-	ErrUserNotFound = &Errno{Code: 2003, Message: "User not found"}
-	ErrPasswordIncorrect = &Errno{Code: 2004, Message: ""}
+	ErrToken = &Errno{Code: 20010, Message: "Token Error"}
+	ErrUserNotFound = &Errno{Code: 2011, Message: "User not found"}
+	ErrPasswordIncorrect = &Errno{Code: 2012, Message: "Password incorrent"}
+	ErrTokenInvalid = &Errno{Code: 2013, Message: "Token invalid"}
 )

@@ -22,24 +22,29 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 	})
 
 	g.POST("/login", userController.Login)
-	hc := g.Group("/health-checks")
+
+	admin := g.Group("/admin")
+	admin.Use(middleware.Auth())
 	{
-		hc.GET("", healthCheckController.HealthCheck)
-		hc.GET("/disk", healthCheckController.DiskCheck)
-		hc.GET("/cpu", healthCheckController.CPUCheck)
-		hc.GET("/ram", healthCheckController.RAMCheck)
-	}
-	articles := g.Group("articles")
-	{
-		articles.POST("", articleController.Store)
-		articles.DELETE("/:id", articleController.Delete)
-		articles.PUT("/:id", articleController.Update)
-		articles.GET("", articleController.Index)
-		articles.GET("/:id", articleController.Show)
-	}
-	uploads := g.Group("uploads")
-	{
-		uploads.GET("", uploadController.Index)
+		hc := admin.Group("/health-checks")
+		{
+			hc.GET("", healthCheckController.HealthCheck)
+			hc.GET("/disk", healthCheckController.DiskCheck)
+			hc.GET("/cpu", healthCheckController.CPUCheck)
+			hc.GET("/ram", healthCheckController.RAMCheck)
+		}
+		articles := admin.Group("articles")
+		{
+			articles.POST("", articleController.Store)
+			articles.DELETE("/:id", articleController.Delete)
+			articles.PUT("/:id", articleController.Update)
+			articles.GET("", articleController.Index)
+			articles.GET("/:id", articleController.Show)
+		}
+		uploads := admin.Group("uploads")
+		{
+			uploads.GET("", uploadController.Index)
+		}
 	}
 
 	return g

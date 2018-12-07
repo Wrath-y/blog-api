@@ -17,8 +17,8 @@ var (
 
 // Context is the context of the JSON web token.
 type Context struct {
-	ID       uint64
-	Username string
+	ID       int
+	Account string
 }
 
 // secretFunc validates the secret format.
@@ -47,8 +47,8 @@ func Parse(tokenString string, secret string) (*Context, error) {
 
 		// Read the token if it's valid.
 	} else if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		ctx.ID = uint64(claims["id"].(float64))
-		ctx.Username = claims["username"].(string)
+		ctx.ID = int(claims["id"].(float64))
+		ctx.Account = claims["account"].(string)
 		return ctx, nil
 
 		// Other errors.
@@ -71,7 +71,7 @@ func ParseRequest(c *gin.Context) (*Context, error) {
 
 	var t string
 	// Parse the header to get the token part.
-	fmt.Sscanf(header, "Bearer %s", &t)
+	fmt.Sscanf(header, "%s", &t)
 	return Parse(t, secret)
 }
 
@@ -84,7 +84,7 @@ func Sign(ctx *gin.Context, c Context, secret string) (tokenString string, err e
 	// The token content.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":       c.ID,
-		"username": c.Username,
+		"account": c.Account,
 		"nbf":      time.Now().Unix(),
 		"iat":      time.Now().Unix(),
 	})
