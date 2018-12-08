@@ -22,8 +22,8 @@ func main() {
 	model.DB.Init()
 	defer model.DB.Close()
 
-	g := gin.New()
 	gin.SetMode(viper.GetString("runmode"))
+	g := gin.New()
 
 	middlewares := []gin.HandlerFunc{}
 
