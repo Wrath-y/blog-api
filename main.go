@@ -32,5 +32,5 @@ func main() {
 			middlewares...,
 		)
 
-	g.Run(viper.GetString("port"))
+	g.RunTLS(viper.GetString("port"), viper.GetString("fullchain"), viper.GetString("key"))
 }
