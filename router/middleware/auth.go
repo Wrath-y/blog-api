@@ -10,7 +10,7 @@ import (
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, err := token.ParseRequest(c); err != nil {
-			_struct.Response(c, errno.ErrTokenInvalid, nil)
+			_struct.Response(c, errno.ErrTokenInvalid, err)
 			c.Abort()
 
 			return

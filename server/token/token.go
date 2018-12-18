@@ -19,6 +19,7 @@ var (
 type Context struct {
 	ID       int
 	Account string
+	Exp		string
 }
 
 // secretFunc validates the secret format.
@@ -49,9 +50,14 @@ func Parse(tokenString string, secret string) (*Context, error) {
 	} else if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		ctx.ID = int(claims["id"].(float64))
 		ctx.Account = claims["account"].(string)
+		ctx.Exp = claims["exp"].(string)
+		now := time.Now()
+		exp, _ := time.Parse("2006-01-02 15:04:05", ctx.Exp)
+		if exp.Before(now) {
+			return ctx, errors.New("token已过期")
+		}
 		return ctx, nil
 
-		// Other errors.
 	} else {
 		return ctx, err
 	}
@@ -82,11 +88,13 @@ func Sign(ctx *gin.Context, c Context, secret string) (tokenString string, err e
 		secret = viper.GetString("jwt_secret")
 	}
 	// The token content.
+	m, _ := time.ParseDuration("+60m")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":       c.ID,
-		"account": c.Account,
-		"nbf":      time.Now().Unix(),
-		"iat":      time.Now().Unix(),
+		"account":  c.Account,
+		"nbf":      time.Now().Format("2006-01-02 15:04:05"),
+		"iat":      time.Now().Format("2006-01-02 15:04:05"),
+		"exp":		time.Now().Add(m).Format("2006-01-02 15:04:05"),
 	})
 	// Sign the token with the specified secret.
 	tokenString, err = token.SignedString([]byte(secret))
