@@ -12,4 +12,5 @@ var (
 	ErrUserNotFound = &Errno{Code: 2011, Message: "User not found"}
 	ErrPasswordIncorrect = &Errno{Code: 2012, Message: "Password incorrent"}
 	ErrTokenInvalid = &Errno{Code: 2013, Message: "Token invalid"}
+	ErrCurl = &Errno{Code: 2014}
 )

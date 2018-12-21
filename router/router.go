@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller/articleController"
 	"go-blog/controller/healthCheckController"
+	"go-blog/controller/spiderController"
 	"go-blog/controller/uploadController"
 	"go-blog/controller/userController"
 	"go-blog/router/middleware"
@@ -20,6 +21,8 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 	g.NoRoute(func(c *gin.Context) {
 		_struct.Response(c, errno.RouteError, nil)
 	})
+
+	g.GET("/", spiderController.Store)
 
 	g.POST("/login", userController.Login)
 

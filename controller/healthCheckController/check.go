@@ -2,6 +2,8 @@ package healthCheckController
 
 import (
 	"fmt"
+	"go-blog/server/token"
+	"go-blog/struct"
 	"net/http"
 	"time"
 
@@ -21,8 +23,8 @@ const (
 
 // HealthCheck shows `OK` as the ping-pong result.
 func HealthCheck(c *gin.Context) {
-	message := "OK"
-	c.String(http.StatusOK, "\n"+message)
+	res, _ := token.ParseRequest(c)
+	_struct.Response(c, nil, res)
 }
 
 // DiskCheck checks the disk usage.
