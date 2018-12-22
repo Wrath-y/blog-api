@@ -1,7 +1,6 @@
 package spider
 
 import (
-	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-blog/struct"
@@ -15,14 +14,14 @@ import (
 )
 
 func Login(c *gin.Context) {
-	proxy, _ := url.Parse("http://127.0.0.1:8123")
-	tr := &http.Transport{
-		Proxy:           http.ProxyURL(proxy),
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
+	//proxy, _ := url.Parse("http://127.0.0.1:8123")
+	//tr := &http.Transport{
+	//	Proxy:           http.ProxyURL(proxy),
+	//	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	//}
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
-		Transport: tr,
+		// Transport: tr,
 		Jar: jar,
 	}
 	loginReq, err := http.NewRequest("GET", loginRrl, nil)
