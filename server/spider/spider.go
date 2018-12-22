@@ -1,6 +1,7 @@
 package spider
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-blog/struct"
@@ -14,8 +15,14 @@ import (
 )
 
 func Login(c *gin.Context) {
+	proxy, _ := url.Parse("http://127.0.0.1:8123")
+	tr := &http.Transport{
+		Proxy:           http.ProxyURL(proxy),
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
+		Transport: tr,
 		Jar: jar,
 	}
 	loginReq, err := http.NewRequest("GET", loginRrl, nil)
@@ -98,13 +105,14 @@ func Login(c *gin.Context) {
 			break
 		}
 	}
-	size := page * 20 + 20
+	size := (page + 1) * 20
 	k := 0
 	imgSlice := make([]struct{
-		ImgId  string
-		Title  string
-		Url	   string
-		Praise string
+		ImgId  		string
+		Title  		string
+		ImgInfo	    string
+		Praise 		string
+		Url 		string
 	}, size)
 	r, _ = regexp.Compile(`data-id="(.+?)".+?title="(.+?)".+?e"></i>(.+?)</a>`)
 	imgExpInfos := r.FindAllStringSubmatch(allContent, size)
@@ -112,7 +120,7 @@ func Login(c *gin.Context) {
 	for _, v := range imgExpInfos {
 		imgSlice[k].ImgId = v[1]
 		imgSlice[k].Title = v[2]
-		imgSlice[k].Url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + v[1]
+		imgSlice[k].ImgInfo = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + v[1]
 		imgSlice[k].Praise = v[3]
 		k = k + 1
 	}
