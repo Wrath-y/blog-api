@@ -20,4 +20,6 @@ func Response(c *gin.Context, err error, data interface{}) {
 		Message:message,
 		Data:	data,
 	})
+
+	return
 }
