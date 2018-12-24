@@ -27,7 +27,10 @@ type Img struct {
 	Praise 		string
 }
 
-var waitGroup = new(sync.WaitGroup)
+var waitGroup = sync.WaitGroup{}
+var errChan chan error
+var finished chan bool
+var lock = new(sync.Mutex)
 
 func Login(c *gin.Context) {
 	proxy, _ := url.Parse("http://127.0.0.1:8123")
@@ -124,23 +127,36 @@ func GetList(c *gin.Context, client *http.Client)  {
 	r, _ := regexp.Compile(`data-id="(.+?)".+?title="(.+?)".+?e"></i>(.+?)</a>`)
 	imgExpInfos := r.FindAllStringSubmatch(allContent, size)
 
+	errChan = make(chan error, 1)
+	finished = make(chan bool, 1)
 	for _, v := range imgExpInfos {
 		imgSlice[k].ImgId = v[1]
 		imgSlice[k].Title = v[2]
 		imgSlice[k].Url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + v[1]
 		imgSlice[k].Praise = v[3]
 		waitGroup.Add(1)
-		GetDetail(c, client, imgSlice[k])
+		go GetDetail(c, client, imgSlice[k], false)
 		k++
-		if k > 3 {
-			break
-		}
+
 	}
-	// waitGroup.Wait()
+	go func() {
+		waitGroup.Wait()
+		close(finished)
+	}()
+	select {
+		case <-finished:
+		case err := <-errChan:
+			_struct.Response(c, errno.ServerError, err)
+			return
+	}
+
 	return
 }
 
-func GetDetail(c *gin.Context, client *http.Client, img Img) {
+func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
+	lock.Lock()
+	defer lock.Unlock()
+	defer waitGroup.Done()
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -167,21 +183,6 @@ func GetDetail(c *gin.Context, client *http.Client, img Img) {
 	exp, _ = regexp.Compile(`\\`)
 	src := exp.ReplaceAllString(content, "")
 
-	var createDate string
-	exp, _ = regexp.Compile(`createDate":"(.+?)",`)
-	createDateArr := exp.FindStringSubmatch(string(buf))
-	if len(createDateArr) > 1 {
-		createDate = createDateArr[1]
-	} else {
-		_struct.Response(c, errno.ErrExp, createDateArr)
-	}
-	exp, _ = regexp.Compile(`T`)
-	createDate1 := exp.ReplaceAllString(createDate, " ")
-	exp, _ = regexp.Compile(`\+.+`)
-	date := exp.ReplaceAllString(createDate1, "")
-	timestamp, _ := time.Parse("2006-01-02 15:04:05", date)
-	GMTtime := timestamp.Format("Mon, 02 Jan 2006 15:04:05 GMT")
-
 	imgreq, _ := http.NewRequest("GET", src, nil)
 	imgreq.Header.Set("Accept",accept)
 	imgreq.Header.Set("Accept-Encoding", "gzip, deflate, br")
@@ -190,12 +191,29 @@ func GetDetail(c *gin.Context, client *http.Client, img Img) {
 	imgreq.Header.Set("pragma", "no-cache")
 	imgreq.Header.Set("Cache-Control", "no-cache")
 	imgreq.Header.Set("User-Agent", userAgent)
-	imgreq.Header.Set("Upgrade-Insecure-Requests", "1")
-	imgreq.Header.Set("If-Modified-Since", GMTtime)
+	if try {
+		var createDate string
+		exp, _ = regexp.Compile(`createDate":"(.+?)",`)
+		createDateArr := exp.FindStringSubmatch(string(buf))
+		if len(createDateArr) > 1 {
+			createDate = createDateArr[1]
+		} else {
+			_struct.Response(c, errno.ErrExp, createDateArr)
+		}
+		exp, _ = regexp.Compile(`T`)
+		createDate1 := exp.ReplaceAllString(createDate, " ")
+		exp, _ = regexp.Compile(`\+.+`)
+		date := exp.ReplaceAllString(createDate1, "")
+		timestamp, _ := time.Parse("2006-01-02 15:04:05", date)
+		GMTtime := timestamp.Format("Mon, 02 Jan 2006 15:04:05 GMT")
+		imgreq.Header.Set("Upgrade-Insecure-Requests", "1")
+		imgreq.Header.Set("If-Modified-Since", GMTtime)
+	}
+
 	imgRes, err := client.Do(imgreq)
 	fmt.Println(imgRes.Header)
-	fmt.Println(img)
-	if _, ok := imgreq.Header["Content-Length"]; ok {
+	fmt.Println(imgRes.ContentLength)
+	if imgRes.ContentLength > 0 {
 		if err != nil || imgRes == nil {
 			_struct.Response(c, errno.ErrCurl.Add("imgres"), img.Title)
 		}
@@ -209,7 +227,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img) {
 		var suffix string
 		exp, _ = regexp.Compile(`p0(.+)`)
 		suffixArr := exp.FindStringSubmatch(src)
-		if len(createDateArr) > 1 {
+		if len(suffixArr) > 1 {
 			suffix = suffixArr[1]
 		} else {
 			_struct.Response(c, errno.ErrExp, suffixArr)
@@ -225,18 +243,17 @@ func GetDetail(c *gin.Context, client *http.Client, img Img) {
 			_struct.Response(c, errno.ErrIoCopy, w)
 		}
 		fmt.Println(img.Title + suffix + "写入成功")
-		// waitGroup.Done()
 	} else {
 		var suffix string
 		exp, _ = regexp.Compile(`p0(.+)`)
 		suffixArr := exp.FindStringSubmatch(src)
-		if len(createDateArr) > 1 {
+		if len(suffixArr) > 1 {
 			suffix = suffixArr[1]
 		} else {
 			_struct.Response(c, errno.ErrExp, suffixArr)
 		}
 		fmt.Println(img.Title + suffix + "写入失败，进入递归")
 		fmt.Println(img)
-		GetDetail(c, client, img)
+		GetDetail(c, client, img, true)
 	}
 }
