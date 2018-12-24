@@ -2,6 +2,7 @@ package spider
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-blog/server/errno"
@@ -13,7 +14,6 @@ import (
 	"net/url"
 	"os"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,20 +27,27 @@ type Img struct {
 	Praise 		string
 }
 
-var counter int = 0
+var waitGroup = new(sync.WaitGroup)
 
 func Login(c *gin.Context) {
+	proxy, _ := url.Parse("http://127.0.0.1:8123")
+	tr := &http.Transport{
+		Proxy:           http.ProxyURL(proxy),
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
+		Transport: tr,
 		Jar: jar,
 		Timeout: time.Second * 60,
 	}
+	var loginResp *http.Response
 	loginReq, err := http.NewRequest("GET", loginRrl, nil)
-	loginResp, err := client.Do(loginReq)
-	defer loginResp.Body.Close()
-	if err != nil {
-		_struct.Response(c, errno.ErrCurl, err)
+	loginResp, err = client.Do(loginReq)
+	if err != nil || loginResp == nil {
+		_struct.Response(c, errno.ErrCurl.Add("login"), err)
 	}
+	defer loginResp.Body.Close()
 	loginBody, err := ioutil.ReadAll(loginResp.Body)
 
 	exp := "post_key\" value=\"(.+?)\">"
@@ -64,10 +71,8 @@ func Login(c *gin.Context) {
 	postLoginReq.Header.Set("Referer", referer)
 	postLoginReq.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(postLoginReq)
-
-	if resp != nil {}
-	if err != nil {
-		_struct.Response(c, errno.ErrCurl, err)
+	if err != nil || resp == nil {
+		_struct.Response(c, errno.ErrCurl.Add("loginpost"), err)
 	}
 	GetList(c, client)
 	return
@@ -76,9 +81,8 @@ func Login(c *gin.Context) {
 func GetList(c *gin.Context, client *http.Client)  {
 	bookmarkReq, _ := http.NewRequest("GET", bookmark, nil)
 	bookmarkResp, err := client.Do(bookmarkReq)
-	defer bookmarkResp.Body.Close()
-	if err != nil {
-		_struct.Response(c, errno.ErrCurl, err)
+	if err != nil || bookmarkResp == nil {
+		_struct.Response(c, errno.ErrCurl.Add("bookmark"), err)
 	}
 	var buf []byte
 	buf, _ = ioutil.ReadAll(bookmarkResp.Body)
@@ -95,8 +99,10 @@ func GetList(c *gin.Context, client *http.Client)  {
 		fmt.Println(p)
 		if p > 1 {
 			bookmarkReq, _ = http.NewRequest("GET", bookmark + "?rest=show&p=" + strconv.Itoa(p), nil)
-			bookmarkResp, _ = client.Do(bookmarkReq)
-			defer bookmarkResp.Body.Close()
+			bookmarkResp, err = client.Do(bookmarkReq)
+			if bookmarkResp == nil {
+				_struct.Response(c, errno.ErrCurl.Add("bookmarkwithpage"), err)
+			}
 			buf, _ = ioutil.ReadAll(bookmarkResp.Body)
 			content = string(buf)
 			allContent += content
@@ -118,33 +124,33 @@ func GetList(c *gin.Context, client *http.Client)  {
 	r, _ := regexp.Compile(`data-id="(.+?)".+?title="(.+?)".+?e"></i>(.+?)</a>`)
 	imgExpInfos := r.FindAllStringSubmatch(allContent, size)
 
-	lock := &sync.Mutex{}
 	for _, v := range imgExpInfos {
 		imgSlice[k].ImgId = v[1]
 		imgSlice[k].Title = v[2]
 		imgSlice[k].Url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + v[1]
 		imgSlice[k].Praise = v[3]
-		go GetDetail(c, client, imgSlice[k], lock)
-		k = k + 1
-	}
-	for {
-		lock.Lock()
-		j := counter
-		lock.Unlock()
-		runtime.Gosched()
-		if j >= len(imgExpInfos) {
+		waitGroup.Add(1)
+		GetDetail(c, client, imgSlice[k])
+		k++
+		if k > 3 {
 			break
 		}
 	}
+	// waitGroup.Wait()
 	return
 }
 
-func GetDetail(c *gin.Context, client *http.Client, img Img, lock *sync.Mutex) {
-	lock.Lock()
+func GetDetail(c *gin.Context, client *http.Client, img Img) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
 	req, _ := http.NewRequest("GET", img.Url, nil)
 	res, err := client.Do(req)
-	if err != nil {
-		_struct.Response(c, errno.ErrCurl, err)
+	if err != nil || res == nil {
+		_struct.Response(c, errno.ErrCurl.Add("imgurl"), err)
 	}
 	defer res.Body.Close()
 
@@ -178,46 +184,59 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, lock *sync.Mutex) {
 
 	imgreq, _ := http.NewRequest("GET", src, nil)
 	imgreq.Header.Set("Accept",accept)
-	imgreq.Header.Set("Accept-Encoding", "deflate, br")
+	imgreq.Header.Set("Accept-Encoding", "gzip, deflate, br")
+	imgreq.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7")
 	imgreq.Header.Set("Referer", img.Url)
+	imgreq.Header.Set("pragma", "no-cache")
+	imgreq.Header.Set("Cache-Control", "no-cache")
 	imgreq.Header.Set("User-Agent", userAgent)
 	imgreq.Header.Set("Upgrade-Insecure-Requests", "1")
 	imgreq.Header.Set("If-Modified-Since", GMTtime)
-	imgreq.Header.Set("Cache-Control", "max-age=0")
 	imgRes, err := client.Do(imgreq)
-	if err != nil {
-		_struct.Response(c, errno.ErrCurl, err)
-	}
-	defer imgRes.Body.Close()
+	fmt.Println(imgRes.Header)
+	fmt.Println(img)
+	if _, ok := imgreq.Header["Content-Length"]; ok {
+		if err != nil || imgRes == nil {
+			_struct.Response(c, errno.ErrCurl.Add("imgres"), img.Title)
+		}
+		defer imgRes.Body.Close()
 
-	imgBytes, err := ioutil.ReadAll(imgRes.Body)
-	if err != nil {
-		_struct.Response(c, errno.ErrIoutilReadAll, err)
-	}
-	fileString := bytes.NewReader(imgBytes)
+		imgBytes, err := ioutil.ReadAll(imgRes.Body)
+		if err != nil {
+			_struct.Response(c, errno.ErrIoutilReadAll, err)
+		}
 
-	var suffix string
-	exp, _ = regexp.Compile(`p0(.+)`)
-	suffixArr := exp.FindStringSubmatch(src)
-	if len(createDateArr) > 1 {
-		suffix = suffixArr[1]
+		var suffix string
+		exp, _ = regexp.Compile(`p0(.+)`)
+		suffixArr := exp.FindStringSubmatch(src)
+		if len(createDateArr) > 1 {
+			suffix = suffixArr[1]
+		} else {
+			_struct.Response(c, errno.ErrExp, suffixArr)
+		}
+
+		newFile, err := os.Create("static/pixiv/" + img.Title + suffix)
+		if err != nil {
+			_struct.Response(c, errno.ErrOsCreate, err)
+		}
+		defer newFile.Close()
+		w, err := io.Copy(newFile, bytes.NewReader(imgBytes))
+		if w == 0 || err != nil  {
+			_struct.Response(c, errno.ErrIoCopy, w)
+		}
+		fmt.Println(img.Title + suffix + "写入成功")
+		// waitGroup.Done()
 	} else {
-		_struct.Response(c, errno.ErrExp, suffixArr)
+		var suffix string
+		exp, _ = regexp.Compile(`p0(.+)`)
+		suffixArr := exp.FindStringSubmatch(src)
+		if len(createDateArr) > 1 {
+			suffix = suffixArr[1]
+		} else {
+			_struct.Response(c, errno.ErrExp, suffixArr)
+		}
+		fmt.Println(img.Title + suffix + "写入失败，进入递归")
+		fmt.Println(img)
+		GetDetail(c, client, img)
 	}
-
-	newFile, err := os.Create("static/pixiv/" + img.Title + suffix)
-	if err != nil {
-		_struct.Response(c, errno.ErrOsCreate, err)
-	}
-	defer newFile.Close()
-	w, err := io.Copy(newFile, fileString)
-	if err != nil {
-		_struct.Response(c, errno.ErrIoCopy, err)
-	}
-	if w == 0  {
-		_struct.Response(c, errno.ErrIoCopy, w)
-	}
-	counter++
-	lock.Unlock()
-	fmt.Println(img.Title + suffix + "写入成功")
 }

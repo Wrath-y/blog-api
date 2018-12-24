@@ -23,13 +23,13 @@ func New(errno *Errno, err string) *Err {
 	return &Err{Code: errno.Code, Message: errno.Message, Err:err}
 }
 
-func (err *Err) Add(message string) error {
+func (err *Errno) Add(message string) error {
 	err.Message += " " + message
 
 	return err
 }
 
-func (err *Err) AddParam(param string) error {
+func (err *Errno) AddParam(param string) error {
 	var buffer bytes.Buffer
 	buffer.WriteString(err.Message)
 	buffer.WriteString(" ")
