@@ -12,6 +12,7 @@ mysqllog: true
 jwt_secret:
 # 阿里云
 uploadUrl: http://gilgamesh.oss-cn-hongkong.aliyuncs.com
+endPoint: oss-cn-hongkong.aliyuncs.com
 accessKeyId:
 accessKeySecret:
 bucketName: gilgamesh

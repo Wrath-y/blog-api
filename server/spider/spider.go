@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"go-blog/server/errno"
 	"go-blog/struct"
 	"io"
@@ -29,10 +31,11 @@ type Img struct {
 
 var waitGroup = sync.WaitGroup{}
 var errChan chan error
+var errCodeChan chan error
 var finished chan bool
 var lock = new(sync.Mutex)
 
-func Login(c *gin.Context) {
+func Get(c *gin.Context) {
 	proxy, _ := url.Parse("http://127.0.0.1:8123")
 	tr := &http.Transport{
 		Proxy:           http.ProxyURL(proxy),
@@ -49,6 +52,7 @@ func Login(c *gin.Context) {
 	loginResp, err = client.Do(loginReq)
 	if err != nil || loginResp == nil {
 		_struct.Response(c, errno.ErrCurl.Add("login"), err)
+		return
 	}
 	defer loginResp.Body.Close()
 	loginBody, err := ioutil.ReadAll(loginResp.Body)
@@ -76,6 +80,7 @@ func Login(c *gin.Context) {
 	resp, err := client.Do(postLoginReq)
 	if err != nil || resp == nil {
 		_struct.Response(c, errno.ErrCurl.Add("loginpost"), err)
+		return
 	}
 	GetList(c, client)
 	return
@@ -86,6 +91,7 @@ func GetList(c *gin.Context, client *http.Client)  {
 	bookmarkResp, err := client.Do(bookmarkReq)
 	if err != nil || bookmarkResp == nil {
 		_struct.Response(c, errno.ErrCurl.Add("bookmark"), err)
+		return
 	}
 	var buf []byte
 	buf, _ = ioutil.ReadAll(bookmarkResp.Body)
@@ -105,6 +111,7 @@ func GetList(c *gin.Context, client *http.Client)  {
 			bookmarkResp, err = client.Do(bookmarkReq)
 			if bookmarkResp == nil {
 				_struct.Response(c, errno.ErrCurl.Add("bookmarkwithpage"), err)
+				return
 			}
 			buf, _ = ioutil.ReadAll(bookmarkResp.Body)
 			content = string(buf)
@@ -127,7 +134,8 @@ func GetList(c *gin.Context, client *http.Client)  {
 	r, _ := regexp.Compile(`data-id="(.+?)".+?title="(.+?)".+?e"></i>(.+?)</a>`)
 	imgExpInfos := r.FindAllStringSubmatch(allContent, size)
 
-	errChan = make(chan error, 1)
+	errChan = make(chan error)
+	errCodeChan = make(chan error)
 	finished = make(chan bool, 1)
 	for _, v := range imgExpInfos {
 		imgSlice[k].ImgId = v[1]
@@ -137,16 +145,18 @@ func GetList(c *gin.Context, client *http.Client)  {
 		waitGroup.Add(1)
 		go GetDetail(c, client, imgSlice[k], false)
 		k++
-
 	}
 	go func() {
 		waitGroup.Wait()
 		close(finished)
+		close(errChan)
+		close(errCodeChan)
 	}()
 	select {
-		case <-finished:
-		case err := <-errChan:
-			_struct.Response(c, errno.ServerError, err)
+		case <- finished:
+		case err := <- errChan:
+			errCode := <- errCodeChan
+			_struct.Response(c, errCode, err)
 			return
 	}
 
@@ -154,8 +164,6 @@ func GetList(c *gin.Context, client *http.Client)  {
 }
 
 func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
-	lock.Lock()
-	defer lock.Unlock()
 	defer waitGroup.Done()
 	defer func() {
 		err := recover()
@@ -163,25 +171,44 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			fmt.Println(err)
 		}
 	}()
+	lock.Lock()
+	defer lock.Unlock()
 	req, _ := http.NewRequest("GET", img.Url, nil)
 	res, err := client.Do(req)
 	if err != nil || res == nil {
-		_struct.Response(c, errno.ErrCurl.Add("imgurl"), err)
+		errChan <- err
+		errCodeChan <- errno.ErrCurl.Add("imgurl")
+		return
 	}
 	defer res.Body.Close()
 
 	var buf []byte
 	var content string
 	buf, _ = ioutil.ReadAll(res.Body)
-	exp, _ := regexp.Compile(`nal":"(.+?)"}`)
+	exp, err := regexp.Compile(`nal":"(.+?)"}`)
 	contentArr := exp.FindStringSubmatch(string(buf))
 	if len(contentArr) > 1 {
 		content = contentArr[1]
 	} else {
-		_struct.Response(c, errno.ErrExp, contentArr)
+		errChan <- errno.ErrExp.Add("未匹配到网页内容")
+		errCodeChan <- errno.ErrExp
+		return
 	}
 	exp, _ = regexp.Compile(`\\`)
 	src := exp.ReplaceAllString(content, "")
+	var suffix string
+	exp, err = regexp.Compile(`p0(.+)`)
+	suffixArr := exp.FindStringSubmatch(src)
+	if len(suffixArr) > 1 {
+		suffix = suffixArr[1]
+	} else {
+		errChan <- errno.ErrExp.Add("未匹配到类型后缀")
+		errCodeChan <- errno.ErrExp
+		return
+	}
+	if Exist("static/pixiv/" + img.Title + suffix) {
+		return
+	}
 
 	imgreq, _ := http.NewRequest("GET", src, nil)
 	imgreq.Header.Set("Accept",accept)
@@ -198,7 +225,9 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		if len(createDateArr) > 1 {
 			createDate = createDateArr[1]
 		} else {
-			_struct.Response(c, errno.ErrExp, createDateArr)
+			errChan <- errno.ErrExp.Add("未匹配到创建时间")
+			errCodeChan <- errno.ErrExp
+			return
 		}
 		exp, _ = regexp.Compile(`T`)
 		createDate1 := exp.ReplaceAllString(createDate, " ")
@@ -211,49 +240,64 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	}
 
 	imgRes, err := client.Do(imgreq)
-	fmt.Println(imgRes.Header)
-	fmt.Println(imgRes.ContentLength)
 	if imgRes.ContentLength > 0 {
 		if err != nil || imgRes == nil {
-			_struct.Response(c, errno.ErrCurl.Add("imgres"), img.Title)
+			errChan <- err
+			errCodeChan <- errno.ErrCurl.Add("imgres")
+			return
 		}
 		defer imgRes.Body.Close()
 
 		imgBytes, err := ioutil.ReadAll(imgRes.Body)
 		if err != nil {
-			_struct.Response(c, errno.ErrIoutilReadAll, err)
+			errChan <- err
+			errCodeChan <- errno.ErrIoutilReadAll
+			return
 		}
 
-		var suffix string
-		exp, _ = regexp.Compile(`p0(.+)`)
-		suffixArr := exp.FindStringSubmatch(src)
-		if len(suffixArr) > 1 {
-			suffix = suffixArr[1]
-		} else {
-			_struct.Response(c, errno.ErrExp, suffixArr)
+		clientSer, err := oss.New(viper.GetString("endPoint"),
+			viper.GetString("accessKeyId"),
+			viper.GetString("accessKeySecret"))
+		if err != nil {
+			errChan <- err
+			errCodeChan <- errno.UploadError.Add("创建client失败")
+			return
 		}
+
+		// 获取存储空间。
+		bucket, err := clientSer.Bucket(viper.GetString("bucketName"))
+		if err != nil {
+			errChan <- err
+			errCodeChan <- errno.UploadError.Add("获取储存空间失败")
+			return
+		}
+		err = bucket.PutObject(img.Title + suffix, bytes.NewReader(imgBytes))
+		if err != nil {
+			errChan <- err
+			errCodeChan <- errno.UploadError.Add("上传byte数组失败")
+			return
+		}
+
 
 		newFile, err := os.Create("static/pixiv/" + img.Title + suffix)
 		if err != nil {
-			_struct.Response(c, errno.ErrOsCreate, err)
+			errChan <- err
+			errCodeChan <- errno.ErrOsCreate
+			return
 		}
 		defer newFile.Close()
 		w, err := io.Copy(newFile, bytes.NewReader(imgBytes))
 		if w == 0 || err != nil  {
-			_struct.Response(c, errno.ErrIoCopy, w)
+			errChan <- err
+			errCodeChan <- errno.ErrIoCopy
+			return
 		}
-		fmt.Println(img.Title + suffix + "写入成功")
 	} else {
-		var suffix string
-		exp, _ = regexp.Compile(`p0(.+)`)
-		suffixArr := exp.FindStringSubmatch(src)
-		if len(suffixArr) > 1 {
-			suffix = suffixArr[1]
-		} else {
-			_struct.Response(c, errno.ErrExp, suffixArr)
-		}
-		fmt.Println(img.Title + suffix + "写入失败，进入递归")
-		fmt.Println(img)
 		GetDetail(c, client, img, true)
 	}
+}
+
+func Exist(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil || os.IsExist(err)
 }

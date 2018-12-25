@@ -6,8 +6,8 @@ import (
 	"go-blog/struct"
 )
 
-func Store(c *gin.Context) {
-	spider.Login(c)
+func Index(c *gin.Context) {
+	spider.Get(c)
 	_struct.Response(c, nil, nil)
 
 	return
