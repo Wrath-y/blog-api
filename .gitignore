@@ -14,8 +14,8 @@ go.sum
 
 .idea
 
-./vendor/
-./bin/
+vendor/
+bin/
 
 supervisord.log
 supervisord.pid
