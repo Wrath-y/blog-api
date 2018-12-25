@@ -14,5 +14,9 @@ go.sum
 
 .idea
 
-vendor
-static/pixiv/*
+static/pixiv/
+vendor/
+bin/
+
+supervisord.log
+supervisord.pid
