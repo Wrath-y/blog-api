@@ -7,6 +7,7 @@ import (
 	"go-blog/config"
 	"go-blog/model"
 	"go-blog/router"
+	"runtime"
 )
 
 var (
@@ -14,6 +15,11 @@ var (
 )
 
 func main() {
+	cpuNum := runtime.NumCPU() - 1
+	if cpuNum <= 0 {
+		cpuNum = 1
+	}
+	runtime.GOMAXPROCS(cpuNum)
 	pflag.Parse()
 	if err := config.Init(*cfg); err != nil {
 		panic(err)

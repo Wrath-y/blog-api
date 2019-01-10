@@ -36,9 +36,7 @@ var finished chan bool
 var lock = new(sync.Mutex)
 
 func Get(c *gin.Context) {
-	proxy, _ := url.Parse("http://127.0.0.1:8123")
 	tr := &http.Transport{
-		Proxy:           http.ProxyURL(proxy),
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	jar, _ := cookiejar.New(nil)
@@ -105,7 +103,6 @@ func GetList(c *gin.Context, client *http.Client)  {
 	}
 	p := 1
 	for {
-		fmt.Println(p)
 		if p > 1 {
 			bookmarkReq, _ = http.NewRequest("GET", bookmark + "?rest=show&p=" + strconv.Itoa(p), nil)
 			bookmarkResp, err = client.Do(bookmarkReq)
@@ -206,6 +203,12 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		errCodeChan <- errno.ErrExp
 		return
 	}
+
+	exp, _ = regexp.Compile(`/`)
+	effecTitle := exp.ReplaceAllString(img.Title, "-")
+
+	img.Title = effecTitle
+
 	if Exist("static/pixiv/" + img.Title + suffix) {
 		return
 	}
@@ -230,9 +233,9 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			return
 		}
 		exp, _ = regexp.Compile(`T`)
-		createDate1 := exp.ReplaceAllString(createDate, " ")
+		effCreateDate := exp.ReplaceAllString(createDate, " ")
 		exp, _ = regexp.Compile(`\+.+`)
-		date := exp.ReplaceAllString(createDate1, "")
+		date := exp.ReplaceAllString(effCreateDate, "")
 		timestamp, _ := time.Parse("2006-01-02 15:04:05", date)
 		GMTtime := timestamp.Format("Mon, 02 Jan 2006 15:04:05 GMT")
 		imgreq.Header.Set("Upgrade-Insecure-Requests", "1")
@@ -255,20 +258,22 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			return
 		}
 
-		clientSer, err := oss.New(viper.GetString("endPoint"),
-			viper.GetString("accessKeyId"),
-			viper.GetString("accessKeySecret"))
-		if err != nil {
-			errChan <- err
-			errCodeChan <- errno.UploadError.Add("创建client失败")
-			return
-		}
-
 		// 获取存储空间。
-		bucket, err := clientSer.Bucket(viper.GetString("bucketName"))
+		bucket, err := Bucket()
 		if err != nil {
 			errChan <- err
 			errCodeChan <- errno.UploadError.Add("获取储存空间失败")
+			return
+		}
+		isExist, err := bucket.IsObjectExist(img.Title + suffix)
+		if err != nil {
+			errChan <- err
+			errCodeChan <- errno.UploadError.Add("判断图片是否存在失败")
+			return
+		}
+		fmt.Println(img.Title, isExist)
+		if isExist == true {
+			fmt.Println(img.Title + "已存在")
 			return
 		}
 		err = bucket.PutObject(img.Title + suffix, bytes.NewReader(imgBytes))
@@ -277,7 +282,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			errCodeChan <- errno.UploadError.Add("上传byte数组失败")
 			return
 		}
-
+		fmt.Println(img.Title + "上传成功")
 
 		newFile, err := os.Create("static/pixiv/" + img.Title + suffix)
 		if err != nil {
@@ -300,4 +305,13 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 func Exist(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil || os.IsExist(err)
+}
+
+func Bucket() (*oss.Bucket, error) {
+	clientSer, _ := oss.New(viper.GetString("endPoint"),
+		viper.GetString("accessKeyId"),
+		viper.GetString("accessKeySecret"))
+
+	// 获取存储空间。
+	return clientSer.Bucket(viper.GetString("bucketName"))
 }
