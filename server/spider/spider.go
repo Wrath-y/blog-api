@@ -57,7 +57,14 @@ func Get(c *gin.Context) {
 
 	exp := "post_key\" value=\"(.+?)\">"
 	r, _ := regexp.Compile(exp)
-	postKey := r.FindStringSubmatch(string(loginBody))[1]
+	var postKey string
+	postKeyArr := r.FindStringSubmatch(string(loginBody))
+	if len(postKeyArr) > 1 {
+		postKey = postKeyArr[1]
+	} else {
+		_struct.Response(c, errno.ErrExp.Add("未匹配到postKey"), postKeyArr)
+		return
+	}
 
 	value := url.Values{}
 	value.Add("pixiv_id", pixivId)
@@ -204,11 +211,27 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		return
 	}
 
+	// 获取存储空间。
+	bucket, err := Bucket()
+	if err != nil {
+		errChan <- err
+		errCodeChan <- errno.UploadError.Add("获取储存空间失败")
+		return
+	}
+	isExist, err := bucket.IsObjectExist(img.Title + suffix)
+	if err != nil {
+		errChan <- err
+		errCodeChan <- errno.UploadError.Add("判断图片是否存在失败")
+		return
+	}
+	if isExist == true {
+		return
+	}
+
 	exp, _ = regexp.Compile(`/`)
 	effecTitle := exp.ReplaceAllString(img.Title, "-")
 
 	img.Title = effecTitle
-
 	if Exist("static/pixiv/" + img.Title + suffix) {
 		return
 	}
@@ -258,31 +281,12 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			return
 		}
 
-		// 获取存储空间。
-		bucket, err := Bucket()
-		if err != nil {
-			errChan <- err
-			errCodeChan <- errno.UploadError.Add("获取储存空间失败")
-			return
-		}
-		isExist, err := bucket.IsObjectExist(img.Title + suffix)
-		if err != nil {
-			errChan <- err
-			errCodeChan <- errno.UploadError.Add("判断图片是否存在失败")
-			return
-		}
-		fmt.Println(img.Title, isExist)
-		if isExist == true {
-			fmt.Println(img.Title + "已存在")
-			return
-		}
 		err = bucket.PutObject(img.Title + suffix, bytes.NewReader(imgBytes))
 		if err != nil {
 			errChan <- err
 			errCodeChan <- errno.UploadError.Add("上传byte数组失败")
 			return
 		}
-		fmt.Println(img.Title + "上传成功")
 
 		newFile, err := os.Create("static/pixiv/" + img.Title + suffix)
 		if err != nil {

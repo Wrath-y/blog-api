@@ -5,6 +5,7 @@ import (
 	"go-blog/controller/articleController"
 	"go-blog/controller/healthCheckController"
 	"go-blog/controller/spiderController"
+	"go-blog/controller/uploadController"
 	"go-blog/controller/userController"
 	"go-blog/router/middleware"
 	"go-blog/server/errno"
@@ -41,13 +42,14 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 			articles.GET("", articleController.Index)
 			articles.GET("/:id", articleController.Show)
 		}
-		//uploads := admin.Group("uploads")
-		//{
-		//	uploads.GET("", uploadController.Index)
-		//}
+		uploads := admin.Group("uploads")
+		{
+			uploads.GET("", uploadController.Index)
+		}
 		pixivs := admin.Group("pixivs")
 		{
-			pixivs.GET("", articleController.Index)
+			pixivs.GET("", spiderController.Index)
+			pixivs.POST("", spiderController.Store)
 		}
 	}
 
