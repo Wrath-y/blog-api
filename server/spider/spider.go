@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/spf13/viper"
 	"go-blog/server/errno"
 	"go-blog/struct"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
@@ -29,6 +29,12 @@ type Img struct {
 	Praise 		string
 }
 
+var upGrader = websocket.Upgrader{
+	CheckOrigin: func (r *http.Request) bool {
+		return true
+	},
+}
+
 var waitGroup = sync.WaitGroup{}
 var errChan chan error
 var errCodeChan chan error
@@ -36,7 +42,9 @@ var finished chan bool
 var lock = new(sync.Mutex)
 
 func Get(c *gin.Context) {
+	proxy, _ := url.Parse("http://127.0.0.1:8123")
 	tr := &http.Transport{
+		Proxy:           http.ProxyURL(proxy),
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	jar, _ := cookiejar.New(nil)
@@ -92,6 +100,11 @@ func Get(c *gin.Context) {
 }
 
 func GetList(c *gin.Context, client *http.Client)  {
+	ws, err := upGrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		return
+	}
+	defer ws.Close()
 	bookmarkReq, _ := http.NewRequest("GET", bookmark, nil)
 	bookmarkResp, err := client.Do(bookmarkReq)
 	if err != nil || bookmarkResp == nil {
@@ -156,14 +169,26 @@ func GetList(c *gin.Context, client *http.Client)  {
 		close(errChan)
 		close(errCodeChan)
 	}()
-	select {
-		case <- finished:
-		case err := <- errChan:
-			errCode := <- errCodeChan
-			_struct.Response(c, errCode, err)
-			return
+	var message []byte
+	ForEnd:
+	for {
+		mt, _, err := ws.ReadMessage()
+		if err != nil {
+			break ForEnd
+		}
+		select {
+		case <-finished:
+		case err := <-errChan:
+			errCode := <-errCodeChan
+			err = ws.WriteMessage(mt, errCode)
+			if err != nil {
+				break ForEnd
+			}
+		}
+		break ForEnd
 	}
 
+	_struct.Response(c, nil, "上传结束")
 	return
 }
 
@@ -194,7 +219,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	if len(contentArr) > 1 {
 		content = contentArr[1]
 	} else {
-		errChan <- errno.ErrExp.Add("未匹配到网页内容")
+		errChan <- errno.ErrExp.Add(img.Title + "未匹配到网页内容")
 		errCodeChan <- errno.ErrExp
 		return
 	}
@@ -218,21 +243,18 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		errCodeChan <- errno.UploadError.Add("获取储存空间失败")
 		return
 	}
-	isExist, err := bucket.IsObjectExist(img.Title + suffix)
+
+	exp, _ = regexp.Compile(`/`)
+	effecTitle := exp.ReplaceAllString(img.Title, "-")
+
+	isExist, err := bucket.IsObjectExist(effecTitle + suffix)
 	if err != nil {
 		errChan <- err
 		errCodeChan <- errno.UploadError.Add("判断图片是否存在失败")
 		return
 	}
 	if isExist == true {
-		return
-	}
-
-	exp, _ = regexp.Compile(`/`)
-	effecTitle := exp.ReplaceAllString(img.Title, "-")
-
-	img.Title = effecTitle
-	if Exist("static/pixiv/" + img.Title + suffix) {
+		fmt.Println(effecTitle + "已存在");
 		return
 	}
 
@@ -281,29 +303,18 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			return
 		}
 
-		err = bucket.PutObject(img.Title + suffix, bytes.NewReader(imgBytes))
+		err = bucket.PutObject(effecTitle + suffix, bytes.NewReader(imgBytes))
 		if err != nil {
 			errChan <- err
 			errCodeChan <- errno.UploadError.Add("上传byte数组失败")
 			return
 		}
-
-		newFile, err := os.Create("static/pixiv/" + img.Title + suffix)
-		if err != nil {
-			errChan <- err
-			errCodeChan <- errno.ErrOsCreate
-			return
-		}
-		defer newFile.Close()
-		w, err := io.Copy(newFile, bytes.NewReader(imgBytes))
-		if w == 0 || err != nil  {
-			errChan <- err
-			errCodeChan <- errno.ErrIoCopy
-			return
-		}
+		fmt.Println(effecTitle + "上传成功");
 	} else {
 		GetDetail(c, client, img, true)
 	}
+
+	return
 }
 
 func Exist(filename string) bool {
