@@ -53,7 +53,7 @@ func Parse(tokenString string, secret string) (*Context, error) {
 		ctx.Exp = claims["exp"].(string)
 		now := time.Now()
 		exp, _ := time.Parse("2006-01-02 15:04:05", ctx.Exp)
-		if exp.Before(now) {
+		if now.Before(exp) {
 			return ctx, errors.New("token已过期")
 		}
 		return ctx, nil
