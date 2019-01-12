@@ -19,10 +19,10 @@ import (
 )
 
 type Img struct {
-	ImgId  		string
-	Title  		string
-	Url	    	string
-	Praise 		string
+	ImgId		string
+	Title		string
+	Url		string
+	Praise		string
 }
 
 type CountRes struct {
@@ -47,9 +47,7 @@ var lock = new(sync.Mutex)
 var count CountRes
 
 func Get(c *gin.Context) {
-	proxy, _ := url.Parse("http://127.0.0.1:8123")
 	tr := &http.Transport{
-		Proxy:           http.ProxyURL(proxy),
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	jar, _ := cookiejar.New(nil)
