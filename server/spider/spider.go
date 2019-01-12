@@ -3,18 +3,14 @@ package spider
 import (
 	"bytes"
 	"crypto/tls"
-	"fmt"
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/spf13/viper"
 	"go-blog/server/errno"
 	"go-blog/struct"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -29,6 +25,14 @@ type Img struct {
 	Praise 		string
 }
 
+type CountRes struct {
+	Success		int
+	Failed		int
+	List		int
+	Page		int
+	Exist		int
+}
+
 var upGrader = websocket.Upgrader{
 	CheckOrigin: func (r *http.Request) bool {
 		return true
@@ -40,6 +44,7 @@ var errChan chan error
 var errCodeChan chan error
 var finished chan bool
 var lock = new(sync.Mutex)
+var count CountRes
 
 func Get(c *gin.Context) {
 	proxy, _ := url.Parse("http://127.0.0.1:8123")
@@ -144,6 +149,10 @@ func GetList(c *gin.Context, client *http.Client)  {
 			break
 		}
 	}
+	count.Page = p
+	count.Success = 0
+	count.Failed = 0
+	count.Exist = 0
 	defer bookmarkResp.Body.Close()
 	size := (page + 1) * 20
 	k := 0
@@ -163,43 +172,28 @@ func GetList(c *gin.Context, client *http.Client)  {
 		go GetDetail(c, client, imgSlice[k], false)
 		k++
 	}
+	count.List = k
 	go func() {
 		waitGroup.Wait()
 		close(finished)
 		close(errChan)
 		close(errCodeChan)
 	}()
-	var message []byte
-	ForEnd:
-	for {
-		mt, _, err := ws.ReadMessage()
-		if err != nil {
-			break ForEnd
-		}
-		select {
+	var errCode error
+	select {
 		case <-finished:
-		case err := <-errChan:
-			errCode := <-errCodeChan
-			err = ws.WriteMessage(mt, errCode)
-			if err != nil {
-				break ForEnd
-			}
-		}
-		break ForEnd
+		case <-errChan:
+			 errCode = <-errCodeChan
+			count.Failed = len(errCodeChan)
+			break
 	}
 
-	_struct.Response(c, nil, "上传结束")
+	_struct.Response(c, errCode, count)
 	return
 }
 
 func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	defer waitGroup.Done()
-	defer func() {
-		err := recover()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
 	lock.Lock()
 	defer lock.Unlock()
 	req, _ := http.NewRequest("GET", img.Url, nil)
@@ -236,17 +230,10 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		return
 	}
 
-	// 获取存储空间。
-	bucket, err := Bucket()
-	if err != nil {
-		errChan <- err
-		errCodeChan <- errno.UploadError.Add("获取储存空间失败")
-		return
-	}
-
 	exp, _ = regexp.Compile(`/`)
 	effecTitle := exp.ReplaceAllString(img.Title, "-")
 
+	bucket, _ := Bucket()
 	isExist, err := bucket.IsObjectExist(effecTitle + suffix)
 	if err != nil {
 		errChan <- err
@@ -254,7 +241,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		return
 	}
 	if isExist == true {
-		fmt.Println(effecTitle + "已存在");
+		count.Exist += 1
 		return
 	}
 
@@ -309,24 +296,10 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			errCodeChan <- errno.UploadError.Add("上传byte数组失败")
 			return
 		}
-		fmt.Println(effecTitle + "上传成功");
+		count.Success += 1
 	} else {
 		GetDetail(c, client, img, true)
 	}
 
 	return
-}
-
-func Exist(filename string) bool {
-	_, err := os.Stat(filename)
-	return err == nil || os.IsExist(err)
-}
-
-func Bucket() (*oss.Bucket, error) {
-	clientSer, _ := oss.New(viper.GetString("endPoint"),
-		viper.GetString("accessKeyId"),
-		viper.GetString("accessKeySecret"))
-
-	// 获取存储空间。
-	return clientSer.Bucket(viper.GetString("bucketName"))
 }

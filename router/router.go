@@ -23,7 +23,6 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 	})
 
 	g.POST("/login", userController.Login)
-	g.GET("/", spiderController.Index)
 	admin := g.Group("/admin")
 	admin.Use(middleware.Auth())
 	{
@@ -49,7 +48,9 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		pixivs := admin.Group("pixivs")
 		{
 			pixivs.GET("", spiderController.Index)
+			pixivs.GET("count", spiderController.Count)
 			pixivs.POST("", spiderController.Store)
+			pixivs.DELETE("", spiderController.Delete)
 		}
 	}
 

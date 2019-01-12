@@ -26,3 +26,17 @@ func Store(c *gin.Context) {
 
 	return
 }
+
+func Delete(c *gin.Context) {
+	res, err := spider.Delete(c.Query("name"))
+	_struct.Response(c, err, res)
+	return
+}
+
+func Count(c *gin.Context) {
+	res, err := spider.Count()
+
+	_struct.Response(c, err, res)
+
+	return
+}
