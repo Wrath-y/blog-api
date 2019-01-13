@@ -22,6 +22,8 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		_struct.Response(c, errno.RouteError, nil)
 	})
 
+	g.GET("/pixivs", spiderController.Index)
+
 	g.POST("/login", userController.Login)
 	admin := g.Group("/admin")
 	admin.Use(middleware.Auth())
