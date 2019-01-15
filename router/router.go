@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-blog/controller/HaremController"
 	"go-blog/controller/articleController"
 	"go-blog/controller/healthCheckController"
 	"go-blog/controller/spiderController"
@@ -25,6 +26,15 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 	g.GET("/pixivs", spiderController.Index)
 
 	g.POST("/login", userController.Login)
+
+	harems := g.Group("harems")
+	{
+		harems.POST("", HaremController.Store)
+		harems.DELETE("/:id", HaremController.Delete)
+		harems.PUT("/:id", HaremController.Update)
+		harems.GET("", HaremController.Index)
+	}
+
 	admin := g.Group("/admin")
 	admin.Use(middleware.Auth())
 	{

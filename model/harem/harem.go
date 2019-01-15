@@ -1,0 +1,63 @@
+package harem
+
+import (
+	"go-blog/model"
+	"time"
+)
+
+type Harem struct {
+	model.Base
+	Name	string `json:"name"`
+	Email	string `json:"email"`
+	Url		string `json:"url"`
+}
+
+func (h *Harem) Create() error {
+	h.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
+	h.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
+
+
+	return model.DB.Self.Create(h).Error
+}
+
+func Delete(id int) error {
+	a := Harem{}
+	a.Id = id
+
+	return model.DB.Self.Delete(a).Error
+}
+
+func (h *Harem) Update(id int) error {
+	h.Id = id
+	h.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
+
+	return model.DB.Self.Model(h).Update(h).Error
+}
+
+func Index(page, limit int) ([]*Harem, int, error) {
+	if limit == 0 {
+		limit = 6
+	}
+
+	harems := make([]*Harem, 0)
+	var count int
+
+	if err := model.DB.Self.Model(&Harem{}).Count(&count).Error; err != nil {
+		return harems, count, err
+	}
+
+	if err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&harems).Error; err != nil {
+		return harems, count, err
+	}
+
+	return harems, count, nil
+}
+
+func Show(id int) (*Harem, error) {
+	harems := &Harem{}
+	if err := model.DB.Self.First(&harems, id).Error; err != nil {
+		return harems, err
+	}
+
+	return harems, nil
+}

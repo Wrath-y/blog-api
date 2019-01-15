@@ -13,13 +13,11 @@ func Store(c *gin.Context) {
 	var r article_struct.Request
 	if err := c.Bind(&r); err != nil {
 		_struct.Response(c, errno.BindError, nil)
-
 		return
 	}
 
 	if err := r.Validate(c); err != nil {
 		_struct.Response(c, err, nil)
-
 		return
 	}
 
@@ -45,7 +43,6 @@ func Delete(c *gin.Context) {
 
 	if err := article.Delete(id); err != nil {
 		_struct.Response(c, errno.DatabaseError, nil)
-
 		return
 	}
 
@@ -59,13 +56,11 @@ func Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	if err := c.Bind(&r); err != nil {
 		_struct.Response(c, errno.BindError, nil)
-
 		return
 	}
 
 	if err := r.Validate(c); err != nil {
 		_struct.Response(c, err, nil)
-
 		return
 	}
 
@@ -111,7 +106,6 @@ func Show(c *gin.Context) {
 	res, err := article.Show(id)
 	if err != nil {
 		_struct.Response(c, errno.DatabaseError, nil)
-
 		return
 	}
 	_struct.Response(c, nil, res)
