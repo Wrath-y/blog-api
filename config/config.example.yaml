@@ -1,7 +1,7 @@
 runmode: debug # debug, release, test
 port: :8081
 name: blog
-url: url_example
+url: listen_url_example
 database:
   name: blog
   url: db_url_example
