@@ -21,10 +21,10 @@ func (h *Harem) Create() error {
 }
 
 func Delete(id int) error {
-	a := Harem{}
-	a.Id = id
+	h := Harem{}
+	h.Id = id
 
-	return model.DB.Self.Delete(a).Error
+	return model.DB.Self.Delete(h).Error
 }
 
 func (h *Harem) Update(id int) error {
