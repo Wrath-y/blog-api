@@ -1,4 +1,4 @@
-package login_struct
+package loginStruct
 
 type Request struct {
 	Account 		string  `json:"account"`

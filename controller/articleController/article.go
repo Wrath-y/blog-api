@@ -5,12 +5,12 @@ import (
 	"go-blog/model/article"
 	"go-blog/server/errno"
 	"go-blog/struct"
-	"go-blog/struct/article-struct"
+	"go-blog/struct/articleStruct"
 	"strconv"
 )
 
 func Store(c *gin.Context) {
-	var r article_struct.Request
+	var r articleStruct.Request
 	if err := c.Bind(&r); err != nil {
 		_struct.Response(c, errno.BindError, nil)
 		return
@@ -52,7 +52,7 @@ func Delete(c *gin.Context) {
 }
 
 func Update(c *gin.Context) {
-	var r article_struct.Request
+	var r articleStruct.Request
 	id, _ := strconv.Atoi(c.Param("id"))
 	if err := c.Bind(&r); err != nil {
 		_struct.Response(c, errno.BindError, nil)
@@ -93,7 +93,7 @@ func Index(c *gin.Context) {
 		return
 	}
 
-	_struct.Response(c, nil, article_struct.Response{
+	_struct.Response(c, nil, articleStruct.Response{
 		Count: count,
 		Data:   data,
 	})

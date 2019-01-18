@@ -1,4 +1,4 @@
-package harem_struct
+package haremStruct
 
 type Request struct {
 	Name	string `json:"name"`

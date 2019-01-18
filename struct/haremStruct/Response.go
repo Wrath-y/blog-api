@@ -1,4 +1,4 @@
-package harem_struct
+package haremStruct
 
 import (
 	"go-blog/model/harem"

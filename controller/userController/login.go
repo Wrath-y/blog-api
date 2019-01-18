@@ -8,11 +8,11 @@ import (
 	"go-blog/server/errno"
 	"go-blog/server/token"
 	"go-blog/struct"
-	"go-blog/struct/login-struct"
+	"go-blog/struct/loginStruct"
 )
 
 func Login(c *gin.Context) {
-	var r login_struct.Request
+	var r loginStruct.Request
 	if err := c.Bind(&r); err != nil {
 		_struct.Response(c, errno.BindError, nil)
 

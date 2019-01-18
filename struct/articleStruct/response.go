@@ -1,4 +1,4 @@
-package article_struct
+package articleStruct
 
 import (
 	"go-blog/model/article"

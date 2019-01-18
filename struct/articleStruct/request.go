@@ -1,4 +1,4 @@
-package article_struct
+package articleStruct
 
 import (
 	"github.com/gin-gonic/gin"
