@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-blog/controller/CommentController"
 	"go-blog/controller/HaremController"
 	"go-blog/controller/articleController"
 	"go-blog/controller/healthCheckController"
@@ -62,7 +63,12 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 			pixivs.GET("", spiderController.Index)
 			pixivs.GET("count", spiderController.Count)
 			pixivs.POST("", spiderController.Store)
-			pixivs.DELETE("", spiderController.Delete)
+			pixivs.DELETE("/:id", spiderController.Delete)
+		}
+		comments := admin.Group("comments")
+		{
+			comments.GET("", CommentController.Index)
+			comments.DELETE("/:id", CommentController.Delete)
 		}
 	}
 
