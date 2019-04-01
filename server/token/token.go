@@ -2,10 +2,9 @@ package token
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -53,11 +52,10 @@ func Parse(tokenString string, secret string) (*Context, error) {
 		ctx.Exp = claims["exp"].(string)
 		now := time.Now()
 		exp, _ := time.Parse("2006-01-02 15:04:05", ctx.Exp)
-		if now.Before(exp) {
+		if now.After(exp) {
 			return ctx, errors.New("token已过期")
 		}
 		return ctx, nil
-
 	} else {
 		return ctx, err
 	}
@@ -75,10 +73,7 @@ func ParseRequest(c *gin.Context) (*Context, error) {
 		return &Context{}, ErrMissingHeader
 	}
 
-	var t string
-	// Parse the header to get the token part.
-	fmt.Sscanf(header, "%s", &t)
-	return Parse(t, secret)
+	return Parse(header, secret)
 }
 
 // Sign signs the context with the specified secret.

@@ -1,7 +1,6 @@
 package spider
 
 import (
-	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/spf13/viper"
 )
@@ -19,7 +18,6 @@ func Index(nextMarker string, page int) (oss.ListObjectsResult, error) {
 
 func Delete(name string) (int, error) {
 	bucket, _ := Bucket()
-	fmt.Println(name)
 	err := bucket.DeleteObject(name)
 	if err != nil {
 		return 0, err
