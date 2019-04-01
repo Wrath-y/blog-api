@@ -35,6 +35,10 @@ type Data struct{
 	Form interface{} `json:"form"`
 	Headers interface{} `json:"headers"`
 	UploadUrl string `json:"upload_url"`
+	Policy string `json:"policy"`
+	OSSAccessKeyId string `json:"oss_access_key_id"`
+	Signature string `json:"signature"`
+	SuccessActionStatus int `json:"success_action_status"`
 }
 
 type Form struct {
@@ -59,7 +63,7 @@ func Index(c *gin.Context) {
 	accessKeyId := viper.GetString("accessKeyId")
 	accessKeySecret :=viper.GetString("accessKeySecret")
 	// host的格式为 bucketname.endpoint
-	host := viper.GetString("uploadUrl")
+	host := "http://blog-ico." + viper.GetString("endPoint")
 	// 上传文件时指定的前缀。
 	uploadDir := ""
 	expireTime := 30
@@ -102,12 +106,10 @@ func Index(c *gin.Context) {
 		AccessUrl: policyToken.Host,
 		Drive: "oss",
 		FileField: "file",
-		Form: &Form{
-			OSSAccessKeyId: accessKeyId,
-			Policy: policyToken.Policy,
-			Signature: policyToken.Signature,
-			SuccessActionStatus: 200,
-		},
+		OSSAccessKeyId: accessKeyId,
+		Policy: policyToken.Policy,
+		Signature: policyToken.Signature,
+		SuccessActionStatus: 200,
 		Headers: []int{},
 		UploadUrl: policyToken.Host,
 	}
