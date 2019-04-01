@@ -35,10 +35,6 @@ type Data struct{
 	Form interface{} `json:"form"`
 	Headers interface{} `json:"headers"`
 	UploadUrl string `json:"upload_url"`
-	Policy string `json:"policy"`
-	OSSAccessKeyId string `json:"oss_access_key_id"`
-	Signature string `json:"signature"`
-	SuccessActionStatus int `json:"success_action_status"`
 }
 
 type Form struct {
@@ -106,10 +102,12 @@ func Index(c *gin.Context) {
 		AccessUrl: policyToken.Host,
 		Drive: "oss",
 		FileField: "file",
-		OSSAccessKeyId: accessKeyId,
-		Policy: policyToken.Policy,
-		Signature: policyToken.Signature,
-		SuccessActionStatus: 200,
+		Form: &Form{
+			OSSAccessKeyId: accessKeyId,
+			Policy: policyToken.Policy,
+			Signature: policyToken.Signature,
+			SuccessActionStatus: 200,
+		},
 		Headers: []int{},
 		UploadUrl: policyToken.Host,
 	}
