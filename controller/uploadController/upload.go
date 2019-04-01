@@ -63,7 +63,7 @@ func Index(c *gin.Context) {
 	accessKeyId := viper.GetString("accessKeyId")
 	accessKeySecret :=viper.GetString("accessKeySecret")
 	// host的格式为 bucketname.endpoint
-	host := "http://blog-ico." + viper.GetString("endPoint")
+	host := "https://blog-ico.oss-cn-shanghai.aliyuncs.com"
 	// 上传文件时指定的前缀。
 	uploadDir := ""
 	expireTime := 30
