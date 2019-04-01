@@ -11,7 +11,7 @@ type Request struct {
 	Image 		string  `json:"image"`
 	Html  		string  `json:"html"`
 	Con   		string  `json:"con"`
-	Tag   		string  `json:"tag"`
+	Tags   		string  `json:"tags"`
 	Status		int     `json:"status"`
 	Source		int     `json:"source"`
 }

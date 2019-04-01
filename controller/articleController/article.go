@@ -26,7 +26,7 @@ func Store(c *gin.Context) {
 		Image: r.Image,
 		Html: r.Html,
 		Con: r.Con,
-		Tag: r.Tag,
+		Tags: r.Tags,
 	}
 	if err := res.Create(); err != nil {
 		_struct.Response(c, errno.DatabaseError, nil)
@@ -69,7 +69,7 @@ func Update(c *gin.Context) {
 		Image: r.Image,
 		Html: r.Html,
 		Con: r.Con,
-		Tag: r.Tag,
+		Tags: r.Tags,
 	}
 	if err := res.Update(id); err != nil {
 		_struct.Response(c, errno.DatabaseError, nil)
