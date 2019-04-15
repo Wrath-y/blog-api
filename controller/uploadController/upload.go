@@ -73,7 +73,7 @@ func Index(c *gin.Context) {
 	var condition []string
 	condition = append(condition, "starts-with")
 	condition = append(condition, "$key")
-	condition= append(condition, uploadDir)
+	condition = append(condition, uploadDir)
 	config.Conditions = append(config.Conditions, condition)
 
 	//calucate signature

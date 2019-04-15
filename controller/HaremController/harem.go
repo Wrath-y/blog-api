@@ -21,8 +21,8 @@ func Store(c *gin.Context) {
 		Email: r.Email,
 		Url: r.Url,
 	}
-	if err := res.Create; err != nil {
-		_struct.Response(c, errno.DatabaseError, err())
+	if err := res.Create(); err != nil {
+		_struct.Response(c, errno.DatabaseError, err)
 		return
 	}
 
@@ -83,6 +83,18 @@ func Index(c *gin.Context) {
 		Count: count,
 		Data:   data,
 	})
+
+	return
+}
+
+func Show(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	res, err := harem.Show(id)
+	if err != nil {
+		_struct.Response(c, errno.DatabaseError, nil)
+		return
+	}
+	_struct.Response(c, nil, res)
 
 	return
 }

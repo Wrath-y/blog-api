@@ -30,9 +30,6 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 
 	harems := g.Group("harems")
 	{
-		harems.POST("", HaremController.Store)
-		harems.DELETE("/:id", HaremController.Delete)
-		harems.PUT("/:id", HaremController.Update)
 		harems.GET("", HaremController.Index)
 	}
 
@@ -69,6 +66,14 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 		{
 			comments.GET("", CommentController.Index)
 			comments.DELETE("/:id", CommentController.Delete)
+		}
+		harems := admin.Group("harems")
+		{
+			harems.POST("", HaremController.Store)
+			harems.DELETE("/:id", HaremController.Delete)
+			harems.PUT("/:id", HaremController.Update)
+			harems.GET("", HaremController.Index)
+			harems.GET("/:id", HaremController.Show)
 		}
 	}
 
