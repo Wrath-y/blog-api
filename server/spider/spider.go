@@ -3,8 +3,8 @@ package spider
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"go-blog/server/errno"
 	"go-blog/struct"
 	"io/ioutil"
@@ -31,12 +31,6 @@ type CountRes struct {
 	List		int
 	Page		int
 	Exist		int
-}
-
-var upGrader = websocket.Upgrader{
-	CheckOrigin: func (r *http.Request) bool {
-		return true
-	},
 }
 
 var waitGroup = sync.WaitGroup{}
@@ -103,11 +97,6 @@ func Get(c *gin.Context) {
 }
 
 func GetList(c *gin.Context, client *http.Client)  {
-	ws, err := upGrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		return
-	}
-	defer ws.Close()
 	bookmarkReq, _ := http.NewRequest("GET", bookmark, nil)
 	bookmarkResp, err := client.Do(bookmarkReq)
 	if err != nil || bookmarkResp == nil {
@@ -118,7 +107,6 @@ func GetList(c *gin.Context, client *http.Client)  {
 	buf, _ = ioutil.ReadAll(bookmarkResp.Body)
 	content := string(buf)
 	allContent := content
-
 	pageExpInfos, _ := regexp.Compile(`w&amp;p=\d+[\s\S]*(\d+)[\s\S]*s="next"`)
 	page, _ := strconv.Atoi(pageExpInfos.FindStringSubmatch(content)[1])
 	if page == 0 {
@@ -191,6 +179,7 @@ func GetList(c *gin.Context, client *http.Client)  {
 }
 
 func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
+	fmt.Println("getdetail");
 	defer waitGroup.Done()
 	lock.Lock()
 	defer lock.Unlock()
