@@ -34,9 +34,9 @@ type CountRes struct {
 }
 
 var waitGroup = sync.WaitGroup{}
-var errChan chan error
-var errCodeChan chan error
-var finished chan bool
+var maxCh = make(chan int, 4)
+//var errChan chan error
+//var errCodeChan chan error
 var lock = new(sync.Mutex)
 var count CountRes
 
@@ -146,48 +146,49 @@ func GetList(c *gin.Context, client *http.Client)  {
 	r, _ := regexp.Compile(`data-id="(.+?)".+?title="(.+?)".+?e"></i>(.+?)</a>`)
 	imgExpInfos := r.FindAllStringSubmatch(allContent, size)
 
-	errChan = make(chan error)
-	errCodeChan = make(chan error)
-	finished = make(chan bool, 1)
+	//errChan = make(chan error)
+	//errCodeChan = make(chan error)
 	for _, v := range imgExpInfos {
 		imgSlice[k].ImgId = v[1]
 		imgSlice[k].Title = v[2]
 		imgSlice[k].Url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + v[1]
 		imgSlice[k].Praise = v[3]
-		waitGroup.Add(1)
+		maxCh <- 1
 		go GetDetail(c, client, imgSlice[k], false)
 		k++
 	}
 	count.List = k
 	go func() {
 		waitGroup.Wait()
-		close(finished)
-		close(errChan)
-		close(errCodeChan)
+		//close(errChan)
+		//close(errCodeChan)
 	}()
-	var errCode error
-	select {
-		case <-finished:
-		case <-errChan:
-			 errCode = <-errCodeChan
-			count.Failed = len(errCodeChan)
-			break
-	}
-
-	_struct.Response(c, errCode, count)
+	//var errCode error
+	//select {
+	//	case <-errChan:
+	//		errCode = <-errCodeChan
+	//		count.Failed = len(errCodeChan)
+	//}
+	fmt.Println("同步pixiv图片结束")
+	_struct.Response(c, nil, count)
 	return
 }
 
 func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
-	fmt.Println("getdetail");
+	waitGroup.Add(1)
 	defer waitGroup.Done()
+	defer func() {
+		<- maxCh
+	}()
 	lock.Lock()
 	defer lock.Unlock()
 	req, _ := http.NewRequest("GET", img.Url, nil)
 	res, err := client.Do(req)
 	if err != nil || res == nil {
-		errChan <- err
-		errCodeChan <- errno.ErrCurl.Add("imgurl")
+		fmt.Println(img.Title + img.ImgId + "imgurl")
+		//errChan <- err
+		//errCodeChan <- errno.ErrCurl.Add(img.Title + img.ImgId + "imgurl")
+		count.Failed += 1
 		return
 	}
 	defer res.Body.Close()
@@ -200,8 +201,10 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	if len(contentArr) > 1 {
 		content = contentArr[1]
 	} else {
-		errChan <- errno.ErrExp.Add(img.Title + "未匹配到网页内容")
-		errCodeChan <- errno.ErrExp
+		fmt.Println(img.Title + img.ImgId + "未匹配到网页内容")
+		//errChan <- errno.ErrExp.Add(img.Title + img.ImgId + "未匹配到网页内容")
+		//errCodeChan <- errno.ErrExp
+		count.Failed += 1
 		return
 	}
 	exp, _ = regexp.Compile(`\\`)
@@ -212,22 +215,33 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	if len(suffixArr) > 1 {
 		suffix = suffixArr[1]
 	} else {
-		errChan <- errno.ErrExp.Add("未匹配到类型后缀")
-		errCodeChan <- errno.ErrExp
+		fmt.Println(img.Title + img.ImgId + "未匹配到类型后缀")
+		//errChan <- errno.ErrExp.Add(img.Title + img.ImgId + "未匹配到类型后缀")
+		//errCodeChan <- errno.ErrExp
+		count.Failed += 1
 		return
 	}
 
 	exp, _ = regexp.Compile(`/`)
-	effecTitle := exp.ReplaceAllString(img.Title, "-")
-
-	bucket, _ := Bucket()
+	effecTitle := exp.ReplaceAllString(img.Title +  img.ImgId, "-")
+	bucket, err := Bucket()
+	if err != nil {
+		fmt.Println("打开bucket失败")
+		//errChan <- err
+		//errCodeChan <- errno.UploadError.Add("打开bucket失败")
+		count.Failed += 1
+		return
+	}
 	isExist, err := bucket.IsObjectExist(effecTitle + suffix)
 	if err != nil {
-		errChan <- err
-		errCodeChan <- errno.UploadError.Add("判断图片是否存在失败")
+		fmt.Println(effecTitle + "判断图片是否存在失败")
+		//errChan <- err
+		//errCodeChan <- errno.UploadError.Add(effecTitle + "判断图片是否存在失败")
+		count.Failed += 1
 		return
 	}
 	if isExist == true {
+		fmt.Println(effecTitle + suffix + "已存在")
 		count.Exist += 1
 		return
 	}
@@ -247,8 +261,10 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		if len(createDateArr) > 1 {
 			createDate = createDateArr[1]
 		} else {
-			errChan <- errno.ErrExp.Add("未匹配到创建时间")
-			errCodeChan <- errno.ErrExp
+			fmt.Println(effecTitle + "未匹配到创建时间")
+			//errChan <- errno.ErrExp.Add(effecTitle + "未匹配到创建时间")
+			//errCodeChan <- errno.ErrExp
+			count.Failed += 1
 			return
 		}
 		exp, _ = regexp.Compile(`T`)
@@ -264,25 +280,32 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	imgRes, err := client.Do(imgreq)
 	if imgRes.ContentLength > 0 {
 		if err != nil || imgRes == nil {
-			errChan <- err
-			errCodeChan <- errno.ErrCurl.Add("imgres")
+			fmt.Println(effecTitle + "imgres")
+			//errChan <- err
+			//errCodeChan <- errno.ErrCurl.Add(effecTitle + "imgres")
+			count.Failed += 1
 			return
 		}
 		defer imgRes.Body.Close()
 
 		imgBytes, err := ioutil.ReadAll(imgRes.Body)
 		if err != nil {
-			errChan <- err
-			errCodeChan <- errno.ErrIoutilReadAll
+			fmt.Println(effecTitle + "imgBytes")
+			//errChan <- err
+			//errCodeChan <- errno.ErrIoutilReadAll
+			count.Failed += 1
 			return
 		}
 
 		err = bucket.PutObject(effecTitle + suffix, bytes.NewReader(imgBytes))
 		if err != nil {
-			errChan <- err
-			errCodeChan <- errno.UploadError.Add("上传byte数组失败")
+			fmt.Println(effecTitle + "上传byte数组失败")
+			//errChan <- err
+			//errCodeChan <- errno.UploadError.Add(effecTitle + "上传byte数组失败")
+			count.Failed += 1
 			return
 		}
+		fmt.Println(effecTitle + suffix + "上传成功")
 		count.Success += 1
 	} else {
 		GetDetail(c, client, img, true)
