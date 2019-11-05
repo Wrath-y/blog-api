@@ -84,8 +84,10 @@ func Update(c *gin.Context) {
 func Index(c *gin.Context) {
 	page, err:= strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
-		panic(err)
+		_struct.Response(c, err, nil)
+		return
 	}
+
 	data, count, err := article.Index(page, 15)
 
 	if err != nil {
