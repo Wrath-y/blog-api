@@ -42,9 +42,8 @@ func Count() (int, error) {
 
 func Bucket() (*oss.Bucket, error) {
 	clientSer, _ := oss.New(viper.GetString("endPoint"),
-		viper.GetString("accessKeyId"),
-		viper.GetString("accessKeySecret"))
-
+	viper.GetString("accessKeyId"),
+	viper.GetString("accessKeySecret"))
 	// 获取存储空间。
 	return clientSer.Bucket(viper.GetString("bucketName"))
 }

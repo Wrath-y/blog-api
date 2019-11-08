@@ -9,11 +9,9 @@ import (
 	"go-blog/struct"
 	"io/ioutil"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -35,62 +33,18 @@ type CountRes struct {
 
 var waitGroup = sync.WaitGroup{}
 var maxCh = make(chan int, 4)
-//var errChan chan error
-//var errCodeChan chan error
 var lock = new(sync.Mutex)
 var count CountRes
+var cookie string
 
-func Get(c *gin.Context) {
+func Get(c *gin.Context, cook string) {
+	cookie = cook
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Transport: tr,
-		Jar: jar,
 		Timeout: time.Second * 60,
-	}
-	var loginResp *http.Response
-	loginReq, err := http.NewRequest("GET", loginRrl, nil)
-	loginResp, err = client.Do(loginReq)
-	if err != nil || loginResp == nil {
-		_struct.Response(c, errno.ErrCurl.Add("login"), err)
-		return
-	}
-	defer loginResp.Body.Close()
-	loginBody, err := ioutil.ReadAll(loginResp.Body)
-
-	exp := "post_key\" value=\"(.+?)\">"
-	r, _ := regexp.Compile(exp)
-	var postKey string
-	postKeyArr := r.FindStringSubmatch(string(loginBody))
-	if len(postKeyArr) > 1 {
-		postKey = postKeyArr[1]
-	} else {
-		_struct.Response(c, errno.ErrExp.Add("未匹配到postKey"), postKeyArr)
-		return
-	}
-
-	value := url.Values{}
-	value.Add("pixiv_id", pixivId)
-	value.Add("password", password)
-	value.Add("post_key", postKey)
-	value.Add("source", "pc")
-	value.Add("ref", ref)
-	value.Add("return_to", returnTo)
-	form := ioutil.NopCloser(strings.NewReader(value.Encode()))
-
-	postLoginReq, _ := http.NewRequest("POST", loginPostRrl, form)
-	postLoginReq.Header.Set("Content-Type","application/x-www-form-urlencoded")
-	postLoginReq.Header.Set("Accept",accept)
-	postLoginReq.Header.Set("Accept-Encoding", "deflate, br")
-	postLoginReq.Header.Set("Origin", origin)
-	postLoginReq.Header.Set("Referer", referer)
-	postLoginReq.Header.Set("User-Agent", userAgent)
-	resp, err := client.Do(postLoginReq)
-	if err != nil || resp == nil {
-		_struct.Response(c, errno.ErrCurl.Add("loginpost"), err)
-		return
 	}
 	GetList(c, client)
 	return
@@ -98,6 +52,7 @@ func Get(c *gin.Context) {
 
 func GetList(c *gin.Context, client *http.Client)  {
 	bookmarkReq, _ := http.NewRequest("GET", bookmark, nil)
+	bookmarkReq.Header.Set("cookie", cookie)
 	bookmarkResp, err := client.Do(bookmarkReq)
 	if err != nil || bookmarkResp == nil {
 		_struct.Response(c, errno.ErrCurl.Add("bookmark"), err)
@@ -107,7 +62,7 @@ func GetList(c *gin.Context, client *http.Client)  {
 	buf, _ = ioutil.ReadAll(bookmarkResp.Body)
 	content := string(buf)
 	allContent := content
-	pageExpInfos, _ := regexp.Compile(`w&amp;p=\d+[\s\S]*(\d+)[\s\S]*s="next"`)
+	pageExpInfos, _ := regexp.Compile(`w&amp;p=(\d+)[\s\S]*s="next"`)
 	page, _ := strconv.Atoi(pageExpInfos.FindStringSubmatch(content)[1])
 	if page == 0 {
 		page = 1
@@ -116,6 +71,7 @@ func GetList(c *gin.Context, client *http.Client)  {
 	for {
 		if p > 1 {
 			bookmarkReq, _ = http.NewRequest("GET", bookmark + "?rest=show&p=" + strconv.Itoa(p), nil)
+			bookmarkReq.Header.Set("cookie", cookie)
 			bookmarkResp, err = client.Do(bookmarkReq)
 			if bookmarkResp == nil {
 				_struct.Response(c, errno.ErrCurl.Add("bookmarkwithpage"), err)
@@ -146,8 +102,6 @@ func GetList(c *gin.Context, client *http.Client)  {
 	r, _ := regexp.Compile(`data-id="(.+?)".+?title="(.+?)".+?e"></i>(.+?)</a>`)
 	imgExpInfos := r.FindAllStringSubmatch(allContent, size)
 
-	//errChan = make(chan error)
-	//errCodeChan = make(chan error)
 	for _, v := range imgExpInfos {
 		imgSlice[k].ImgId = v[1]
 		imgSlice[k].Title = v[2]
@@ -160,15 +114,7 @@ func GetList(c *gin.Context, client *http.Client)  {
 	count.List = k
 	go func() {
 		waitGroup.Wait()
-		//close(errChan)
-		//close(errCodeChan)
 	}()
-	//var errCode error
-	//select {
-	//	case <-errChan:
-	//		errCode = <-errCodeChan
-	//		count.Failed = len(errCodeChan)
-	//}
 	fmt.Println("同步pixiv图片结束")
 	_struct.Response(c, nil, count)
 	return
@@ -183,6 +129,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	lock.Lock()
 	defer lock.Unlock()
 	req, _ := http.NewRequest("GET", img.Url, nil)
+	req.Header.Set("cookie", cookie)
 	res, err := client.Do(req)
 	if err != nil || res == nil {
 		fmt.Println(img.Title + img.ImgId + "imgurl")
@@ -247,6 +194,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	}
 
 	imgreq, _ := http.NewRequest("GET", src, nil)
+	imgreq.Header.Set("cookie", cookie)
 	imgreq.Header.Set("Accept",accept)
 	imgreq.Header.Set("Accept-Encoding", "gzip, deflate, br")
 	imgreq.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7")

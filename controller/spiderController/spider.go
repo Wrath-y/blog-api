@@ -5,6 +5,7 @@ import (
 	"go-blog/server/errno"
 	"go-blog/server/spider"
 	"go-blog/struct"
+	"go-blog/struct/spiderStruct"
 	"strconv"
 )
 
@@ -21,7 +22,18 @@ func Index(c *gin.Context) {
 }
 
 func Store(c *gin.Context) {
-	spider.Get(c)
+	var r spiderStruct.UpdateImgRequest
+	if err := c.Bind(&r); err != nil {
+		_struct.Response(c, errno.BindError, nil)
+		return
+	}
+
+	if err := r.Validate(c); err != nil {
+		_struct.Response(c, err, nil)
+		return
+	}
+
+	spider.Get(c, r.Cookie)
 	_struct.Response(c, nil, nil)
 
 	return
