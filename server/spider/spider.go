@@ -9,7 +9,6 @@ import (
 	"go-blog/struct"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strconv"
 	"sync"
