@@ -168,16 +168,12 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, maxCh chan int, try
 	bucket, err := Bucket()
 	if err != nil {
 		log.Logger.Info().Msg("打开bucket失败")
-		//errChan <- err
-		//errCodeChan <- errno.UploadError.Add("打开bucket失败")
 		count.Failed += 1
 		return
 	}
 	isExist, err := bucket.IsObjectExist(effecTitle + suffix)
 	if err != nil {
 		log.Logger.Info().Msg(effecTitle + "判断图片是否存在失败")
-		//errChan <- err
-		//errCodeChan <- errno.UploadError.Add(effecTitle + "判断图片是否存在失败")
 		count.Failed += 1
 		return
 	}
