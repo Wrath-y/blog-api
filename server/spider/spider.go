@@ -238,6 +238,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, maxCh chan int, try
 		log.Logger.Info().Msg(effecTitle + suffix + "上传成功")
 		count.Success += 1
 	} else {
+		maxCh <- 1
 		GetDetail(c, client, img, maxCh, true)
 	}
 
