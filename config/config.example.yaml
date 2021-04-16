@@ -16,3 +16,6 @@ endPoint: oss-cn-hongkong.aliyuncs.com
 accessKeyId: accessKeyId_example
 accessKeySecret: accessKeySecret_example
 bucketName: gilgamesh
+# 日志
+log_path: /var/logs/go-blog/
+log_level: 1
