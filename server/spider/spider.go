@@ -3,8 +3,8 @@ package spider
 import (
 	"bytes"
 	"crypto/tls"
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 	"go-blog/server/errno"
 	"go-blog/struct"
 	"io/ioutil"
@@ -31,7 +31,6 @@ type CountRes struct {
 }
 
 var waitGroup = sync.WaitGroup{}
-var maxCh = make(chan int, 4)
 var lock = new(sync.Mutex)
 var count CountRes
 var cookie string
@@ -101,29 +100,31 @@ func GetList(c *gin.Context, client *http.Client)  {
 	r, _ := regexp.Compile(`data-id="(.+?)".+?title="(.+?)".+?e"></i>(.+?)</a>`)
 	imgExpInfos := r.FindAllStringSubmatch(allContent, size)
 
+	log.Logger.Info().Msg("同步pixiv图片开始")
+
+	maxCh := make(chan int, 10)
 	for _, v := range imgExpInfos {
 		imgSlice[k].ImgId = v[1]
 		imgSlice[k].Title = v[2]
 		imgSlice[k].Url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + v[1]
 		imgSlice[k].Praise = v[3]
 		maxCh <- 1
-		go GetDetail(c, client, imgSlice[k], false)
+		waitGroup.Add(1)
+		go GetDetail(c, client, imgSlice[k], maxCh, false)
 		k++
 	}
 	count.List = k
 	go func() {
 		waitGroup.Wait()
+		log.Logger.Info().Msg("同步pixiv图片结束")
 	}()
-	fmt.Println("同步pixiv图片结束")
-	_struct.Response(c, nil, count)
-	return
+	_struct.Response(c, nil, nil)
 }
 
-func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
-	waitGroup.Add(1)
-	defer waitGroup.Done()
+func GetDetail(c *gin.Context, client *http.Client, img Img, maxCh chan int, try bool) {
 	defer func() {
 		<- maxCh
+		waitGroup.Done()
 	}()
 	lock.Lock()
 	defer lock.Unlock()
@@ -131,9 +132,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	req.Header.Set("cookie", cookie)
 	res, err := client.Do(req)
 	if err != nil || res == nil {
-		fmt.Println(img.Title + img.ImgId + "imgurl")
-		//errChan <- err
-		//errCodeChan <- errno.ErrCurl.Add(img.Title + img.ImgId + "imgurl")
+		log.Logger.Info().Msg(img.Title + img.ImgId + "imgurl")
 		count.Failed += 1
 		return
 	}
@@ -147,9 +146,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	if len(contentArr) > 1 {
 		content = contentArr[1]
 	} else {
-		fmt.Println(img.Title + img.ImgId + "未匹配到网页内容")
-		//errChan <- errno.ErrExp.Add(img.Title + img.ImgId + "未匹配到网页内容")
-		//errCodeChan <- errno.ErrExp
+		log.Logger.Info().Msg(img.Title + img.ImgId + "未匹配到网页内容")
 		count.Failed += 1
 		return
 	}
@@ -161,9 +158,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	if len(suffixArr) > 1 {
 		suffix = suffixArr[1]
 	} else {
-		fmt.Println(img.Title + img.ImgId + "未匹配到类型后缀")
-		//errChan <- errno.ErrExp.Add(img.Title + img.ImgId + "未匹配到类型后缀")
-		//errCodeChan <- errno.ErrExp
+		log.Logger.Info().Msg(img.Title + img.ImgId + "未匹配到类型后缀")
 		count.Failed += 1
 		return
 	}
@@ -172,7 +167,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	effecTitle := exp.ReplaceAllString(img.Title +  img.ImgId, "-")
 	bucket, err := Bucket()
 	if err != nil {
-		fmt.Println("打开bucket失败")
+		log.Logger.Info().Msg("打开bucket失败")
 		//errChan <- err
 		//errCodeChan <- errno.UploadError.Add("打开bucket失败")
 		count.Failed += 1
@@ -180,14 +175,14 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	}
 	isExist, err := bucket.IsObjectExist(effecTitle + suffix)
 	if err != nil {
-		fmt.Println(effecTitle + "判断图片是否存在失败")
+		log.Logger.Info().Msg(effecTitle + "判断图片是否存在失败")
 		//errChan <- err
 		//errCodeChan <- errno.UploadError.Add(effecTitle + "判断图片是否存在失败")
 		count.Failed += 1
 		return
 	}
 	if isExist == true {
-		fmt.Println(effecTitle + suffix + "已存在")
+		log.Logger.Info().Msg(effecTitle + suffix + "已存在")
 		count.Exist += 1
 		return
 	}
@@ -208,9 +203,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		if len(createDateArr) > 1 {
 			createDate = createDateArr[1]
 		} else {
-			fmt.Println(effecTitle + "未匹配到创建时间")
-			//errChan <- errno.ErrExp.Add(effecTitle + "未匹配到创建时间")
-			//errCodeChan <- errno.ErrExp
+			log.Logger.Info().Msg(effecTitle + "未匹配到创建时间")
 			count.Failed += 1
 			return
 		}
@@ -227,9 +220,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	imgRes, err := client.Do(imgreq)
 	if imgRes.ContentLength > 0 {
 		if err != nil || imgRes == nil {
-			fmt.Println(effecTitle + "imgres")
-			//errChan <- err
-			//errCodeChan <- errno.ErrCurl.Add(effecTitle + "imgres")
+			log.Logger.Info().Msg(effecTitle + "imgres")
 			count.Failed += 1
 			return
 		}
@@ -237,25 +228,21 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 
 		imgBytes, err := ioutil.ReadAll(imgRes.Body)
 		if err != nil {
-			fmt.Println(effecTitle + "imgBytes")
-			//errChan <- err
-			//errCodeChan <- errno.ErrIoutilReadAll
+			log.Logger.Info().Msg(effecTitle + "imgBytes")
 			count.Failed += 1
 			return
 		}
 
 		err = bucket.PutObject(effecTitle + suffix, bytes.NewReader(imgBytes))
 		if err != nil {
-			fmt.Println(effecTitle + "上传byte数组失败")
-			//errChan <- err
-			//errCodeChan <- errno.UploadError.Add(effecTitle + "上传byte数组失败")
+			log.Logger.Info().Msg(effecTitle + "上传byte数组失败")
 			count.Failed += 1
 			return
 		}
-		fmt.Println(effecTitle + suffix + "上传成功")
+		log.Logger.Info().Msg(effecTitle + suffix + "上传成功")
 		count.Success += 1
 	} else {
-		GetDetail(c, client, img, true)
+		GetDetail(c, client, img, maxCh, true)
 	}
 
 	return
