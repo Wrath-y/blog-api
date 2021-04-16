@@ -17,10 +17,11 @@ import (
 func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 	// middleware
 	g.Use(gin.Recovery())
+	g.Use(middleware.Logger)
 	g.Use(middleware.NoCache)
 	g.Use(middleware.Options)
-	g.Use(middleware.Logger)
 	g.Use(mw...)
+
 	g.NoRoute(func(c *gin.Context) {
 		_struct.Response(c, errno.RouteError, nil)
 	})
