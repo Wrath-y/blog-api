@@ -17,6 +17,7 @@ go.sum
 static/pixiv/
 vendor/
 bin/
+logs/
 
 supervisord.log
 supervisord.pid

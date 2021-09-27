@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/ip2location/ip2location-go/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go-blog/config"
@@ -15,6 +17,7 @@ var (
 )
 
 func main() {
+	var err error
 	cpuNum := runtime.NumCPU() - 1
 	if cpuNum <= 0 {
 		cpuNum = 1
@@ -22,7 +25,7 @@ func main() {
 	runtime.GOMAXPROCS(cpuNum)
 	pflag.Parse()
 	if err := config.Init(*cfg); err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("init config faild")
 	}
 
 	model.DB.Init()
@@ -31,16 +34,15 @@ func main() {
 	gin.SetMode(viper.GetString("runmode"))
 	g := gin.New()
 
-	middlewares := []gin.HandlerFunc{}
+	router.Load(g)
 
-	router.Load(
-		g,
-		middlewares...,
-	)
+	// IP转区号
+	config.IP2LocationDB, err = ip2location.OpenDB("./IP2LOCATION-LITE-DB1.BIN")
+	defer config.IP2LocationDB.Close()
+	if err != nil {
+		log.Fatal().Err(err).Msg("./IP2LOCATION-LITE-DB1.BIN open faild")
+	}
 
 	// g.RunTLS(viper.GetString("port"), viper.GetString("fullchain"), viper.GetString("key"))
-	err := g.Run(":" + viper.GetString("port"))
-	if err != nil {
-		panic(err)
-	}
+	g.Run(":" + viper.GetString("port"))
 }

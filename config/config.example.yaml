@@ -16,3 +16,6 @@ endPoint: oss-cn-shanghai.aliyuncs.com
 accessKeyId: accessKeyId_example
 accessKeySecret: accessKeySecret_example
 bucketName: wrath-pixiv
+# 日志
+log_path: /var/logs/go-blog/
+log_level: 1
