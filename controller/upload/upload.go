@@ -1,4 +1,4 @@
-package uploadController
+package upload
 
 import (
 	"crypto/hmac"
@@ -7,46 +7,46 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"go-blog/req_struct"
 	"go-blog/server/errno"
-	"go-blog/struct"
 	"hash"
 	"time"
 )
 
-type ConfigStruct struct{
-	Expiration string `json:"expiration"`
+type ConfigStruct struct {
+	Expiration string     `json:"expiration"`
 	Conditions [][]string `json:"conditions"`
 }
 
-type PolicyToken struct{
+type PolicyToken struct {
 	AccessKeyId string `json:"accessid"`
-	Host string `json:"host"`
-	Expire int64 `json:"expire"`
-	Signature string `json:"signature"`
-	Policy string `json:"policy"`
-	Directory string `json:"dir"`
-	Callback string `json:"callback"`
+	Host        string `json:"host"`
+	Expire      int64  `json:"expire"`
+	Signature   string `json:"signature"`
+	Policy      string `json:"policy"`
+	Directory   string `json:"dir"`
+	Callback    string `json:"callback"`
 }
 
-type Data struct{
-	AccessUrl string `json:"access_url"`
-	Drive string `json:"drive"`
-	FileField string `json:"file_field"`
-	Form interface{} `json:"form"`
-	Headers interface{} `json:"headers"`
-	UploadUrl string `json:"upload_url"`
+type Data struct {
+	AccessUrl string      `json:"access_url"`
+	Drive     string      `json:"drive"`
+	FileField string      `json:"file_field"`
+	Form      interface{} `json:"form"`
+	Headers   interface{} `json:"headers"`
+	UploadUrl string      `json:"upload_url"`
 }
 
 type Form struct {
-	OSSAccessKeyId string `json:"OSSAccessKeyId"`
-	Policy string `json:"policy"`
-	Signature string `json:"signature"`
-	SuccessActionStatus int `json:"success_action_status"`
+	OSSAccessKeyId      string `json:"OSSAccessKeyId"`
+	Policy              string `json:"policy"`
+	Signature           string `json:"signature"`
+	SuccessActionStatus int    `json:"success_action_status"`
 }
 
-type CallbackParam struct{
-	CallbackUrl string `json:"callbackUrl"`
-	CallbackBody string `json:"callbackBody"`
+type CallbackParam struct {
+	CallbackUrl      string `json:"callbackUrl"`
+	CallbackBody     string `json:"callbackBody"`
 	CallbackBodyType string `json:"callbackBodyType"`
 }
 
@@ -57,7 +57,7 @@ func GetGmtIso8601(expireEnd int64) string {
 
 func Index(c *gin.Context) {
 	accessKeyId := viper.GetString("accessKeyId")
-	accessKeySecret :=viper.GetString("accessKeySecret")
+	accessKeySecret := viper.GetString("accessKeySecret")
 	// host的格式为 bucketname.endpoint
 	host := "https://wrath.oss-cn-shanghai.aliyuncs.com"
 	// 上传文件时指定的前缀。
@@ -93,25 +93,25 @@ func Index(c *gin.Context) {
 
 	//policy, err := json.Marshal(policyToken)
 	if err != nil {
-		_struct.Response(c, errno.UploadError, err)
+		req_struct.Response(c, errno.UploadErr, err)
 
 		return
 	}
 
 	response := &Data{
 		AccessUrl: policyToken.Host,
-		Drive: "oss",
+		Drive:     "oss",
 		FileField: "file",
 		Form: &Form{
-			OSSAccessKeyId: accessKeyId,
-			Policy: policyToken.Policy,
-			Signature: policyToken.Signature,
+			OSSAccessKeyId:      accessKeyId,
+			Policy:              policyToken.Policy,
+			Signature:           policyToken.Signature,
 			SuccessActionStatus: 200,
 		},
-		Headers: []int{},
+		Headers:   []int{},
 		UploadUrl: policyToken.Host,
 	}
-	_struct.Response(c, nil, response)
+	req_struct.Response(c, nil, response)
 
 	return
 }

@@ -1,32 +1,32 @@
-package HaremController
+package harem
 
 import (
 	"github.com/gin-gonic/gin"
 	"go-blog/model/harem"
+	"go-blog/req_struct"
+	"go-blog/req_struct/req_harem"
 	"go-blog/server/errno"
-	"go-blog/struct"
-	"go-blog/struct/haremStruct"
 	"strconv"
 )
 
 func Store(c *gin.Context) {
-	var r haremStruct.Request
+	var r req_harem.Request
 	if err := c.Bind(&r); err != nil {
-		_struct.Response(c, errno.BindError, err)
+		req_struct.Response(c, errno.BindError, err)
 		return
 	}
 
 	res := &harem.Harem{
-		Name: r.Name,
+		Name:  r.Name,
 		Email: r.Email,
-		Url: r.Url,
+		Url:   r.Url,
 	}
 	if err := res.Create(); err != nil {
-		_struct.Response(c, errno.DatabaseError, err)
+		req_struct.Response(c, errno.DatabaseError, err)
 		return
 	}
 
-	_struct.Response(c, nil, res)
+	req_struct.Response(c, nil, res)
 
 	return
 }
@@ -35,53 +35,53 @@ func Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	if err := harem.Delete(id); err != nil {
-		_struct.Response(c, errno.DatabaseError, nil)
+		req_struct.Response(c, errno.DatabaseError, nil)
 		return
 	}
 
-	_struct.Response(c, nil, nil)
+	req_struct.Response(c, nil, nil)
 
 	return
 }
 
 func Update(c *gin.Context) {
-	var r haremStruct.Request
+	var r req_harem.Request
 	id, _ := strconv.Atoi(c.Param("id"))
 	if err := c.Bind(&r); err != nil {
-		_struct.Response(c, errno.BindError, nil)
+		req_struct.Response(c, errno.BindError, nil)
 		return
 	}
 
 	res := &harem.Harem{
-		Name: r.Name,
+		Name:  r.Name,
 		Email: r.Email,
-		Url: r.Url,
+		Url:   r.Url,
 	}
 	if err := res.Update(id); err != nil {
-		_struct.Response(c, errno.DatabaseError, nil)
+		req_struct.Response(c, errno.DatabaseError, nil)
 		return
 	}
 
-	_struct.Response(c, nil, res)
+	req_struct.Response(c, nil, res)
 
 	return
 }
 
 func Index(c *gin.Context) {
-	page, err:= strconv.Atoi(c.DefaultQuery("page", "1"))
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		panic(err)
 	}
 	data, count, err := harem.Index(page, 15)
 
 	if err != nil {
-		_struct.Response(c, err, nil)
+		req_struct.Response(c, err, nil)
 		return
 	}
 
-	_struct.Response(c, nil, haremStruct.Response{
+	req_struct.Response(c, nil, req_harem.Response{
 		Count: count,
-		Data:   data,
+		Data:  data,
 	})
 
 	return
@@ -91,10 +91,10 @@ func Show(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	res, err := harem.Show(id)
 	if err != nil {
-		_struct.Response(c, errno.DatabaseError, nil)
+		req_struct.Response(c, errno.DatabaseError, nil)
 		return
 	}
-	_struct.Response(c, nil, res)
+	req_struct.Response(c, nil, res)
 
 	return
 }

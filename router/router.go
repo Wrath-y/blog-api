@@ -2,35 +2,36 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-blog/controller/CommentController"
-	"go-blog/controller/HaremController"
-	"go-blog/controller/articleController"
-	"go-blog/controller/healthCheckController"
-	"go-blog/controller/spiderController"
-	"go-blog/controller/uploadController"
-	"go-blog/controller/userController"
+	"go-blog/controller/article"
+	"go-blog/controller/comment"
+	"go-blog/controller/harem"
+	"go-blog/controller/health_check"
+	"go-blog/controller/spider"
+	"go-blog/controller/upload"
+	"go-blog/controller/user"
+	"go-blog/req_struct"
 	"go-blog/router/middleware"
 	"go-blog/server/errno"
-	"go-blog/struct"
 )
 
-func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
+func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	// middleware
 	g.Use(gin.Recovery())
 	g.Use(middleware.NoCache)
 	g.Use(middleware.Options)
 	g.Use(mw...)
 	g.NoRoute(func(c *gin.Context) {
-		_struct.Response(c, errno.RouteError, nil)
+		req_struct.Response(c, errno.RouteError, nil)
+		return
 	})
 
-	g.GET("/pixivs", spiderController.Index)
+	g.GET("/pixivs", spider.Index)
 
-	g.POST("/login", userController.Login)
+	g.POST("/login", user.Login)
 
 	harems := g.Group("harems")
 	{
-		harems.GET("", HaremController.Index)
+		harems.GET("", harem.Index)
 	}
 
 	admin := g.Group("/admin")
@@ -38,45 +39,44 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine  {
 	{
 		hc := admin.Group("/health-checks")
 		{
-			hc.GET("", healthCheckController.HealthCheck)
-			hc.GET("/disk", healthCheckController.DiskCheck)
-			hc.GET("/cpu", healthCheckController.CPUCheck)
-			hc.GET("/ram", healthCheckController.RAMCheck)
+			hc.GET("", health_check.HealthCheck)
+			hc.GET("/disk", health_check.DiskCheck)
+			hc.GET("/cpu", health_check.CPUCheck)
+			hc.GET("/ram", health_check.RAMCheck)
 		}
 		articles := admin.Group("articles")
 		{
-			articles.POST("", articleController.Store)
-			articles.DELETE("/:id", articleController.Delete)
-			articles.PUT("/:id", articleController.Update)
-			articles.GET("", articleController.Index)
-			articles.GET("/:id", articleController.Show)
+			articles.POST("", article.Store)
+			articles.DELETE("/:id", article.Delete)
+			articles.PUT("/:id", article.Update)
+			articles.GET("", article.Index)
+			articles.GET("/:id", article.Show)
 		}
 		uploads := admin.Group("uploads")
 		{
-			uploads.GET("", uploadController.Index)
+			uploads.GET("", upload.Index)
 		}
 		pixivs := admin.Group("pixivs")
 		{
-			pixivs.GET("", spiderController.Index)
-			pixivs.GET("count", spiderController.Count)
-			pixivs.POST("", spiderController.Store)
-			pixivs.DELETE("/:id", spiderController.Delete)
+			pixivs.GET("", spider.Index)
+			pixivs.GET("count", spider.Count)
+			pixivs.POST("", spider.Store)
+			pixivs.DELETE("/:id", spider.Delete)
 		}
 		comments := admin.Group("comments")
 		{
-			comments.GET("", CommentController.Index)
-			comments.DELETE("/:id", CommentController.Delete)
+			comments.GET("", comment.Index)
+			comments.DELETE("/:id", comment.Delete)
 		}
 		harems := admin.Group("harems")
 		{
-			harems.POST("", HaremController.Store)
-			harems.DELETE("/:id", HaremController.Delete)
-			harems.PUT("/:id", HaremController.Update)
-			harems.GET("", HaremController.Index)
-			harems.GET("/:id", HaremController.Show)
+			harems.POST("", harem.Store)
+			harems.DELETE("/:id", harem.Delete)
+			harems.PUT("/:id", harem.Update)
+			harems.GET("", harem.Index)
+			harems.GET("/:id", harem.Show)
 		}
 	}
 
 	return g
 }
-
