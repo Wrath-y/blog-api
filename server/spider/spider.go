@@ -5,10 +5,11 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go-blog/req_struct"
 	"go-blog/server/errno"
-	"go-blog/struct"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"sync"
@@ -16,64 +17,83 @@ import (
 )
 
 type Img struct {
-	ImgId		string
-	Title		string
-	Url		string
-	Praise		string
+	ImgId  string
+	Title  string
+	Url    string
+	Praise string
 }
 
 type CountRes struct {
-	Success		int
-	Failed		int
-	List		int
-	Page		int
-	Exist		int
+	Success int
+	Failed  int
+	List    int
+	Page    int
+	Exist   int
 }
 
-var waitGroup = sync.WaitGroup{}
-var maxCh = make(chan int, 4)
-var lock = new(sync.Mutex)
-var count CountRes
-var cookie string
+type Conf struct {
+	waitGroup *sync.WaitGroup
+	maxCh     chan int
+	lock      *sync.Mutex
+	count     CountRes
+	cookie    string
+}
 
 func Get(c *gin.Context, cook string) {
-	cookie = cook
+	conf := new(Conf)
+	conf.waitGroup = new(sync.WaitGroup)
+	conf.maxCh = make(chan int, 100)
+	conf.lock = new(sync.Mutex)
+	conf.count = CountRes{}
+	conf.cookie = cook
+
+	proxy, _ := url.Parse("socks5://127.0.0.1:1080")
 	tr := &http.Transport{
+		Proxy:           http.ProxyURL(proxy),
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{
 		Transport: tr,
-		Timeout: time.Second * 60,
+		Timeout:   time.Second * 60,
 	}
-	GetList(c, client)
+	GetList(c, client, conf)
 	return
 }
 
-func GetList(c *gin.Context, client *http.Client)  {
+func GetList(c *gin.Context, client *http.Client, conf *Conf) {
 	bookmarkReq, _ := http.NewRequest("GET", bookmark, nil)
-	bookmarkReq.Header.Set("cookie", cookie)
+	bookmarkReq.Header.Set("cookie", conf.cookie)
 	bookmarkResp, err := client.Do(bookmarkReq)
 	if err != nil || bookmarkResp == nil {
-		_struct.Response(c, errno.ErrCurl.Add("bookmark"), err)
+		req_struct.Response(c, errno.CurlErr.Add("bookmark"), err)
 		return
 	}
 	var buf []byte
 	buf, _ = ioutil.ReadAll(bookmarkResp.Body)
 	content := string(buf)
+	fmt.Println(content)
 	allContent := content
 	pageExpInfos, _ := regexp.Compile(`w&amp;p=(\d+)[\s\S]*s="next"`)
-	page, _ := strconv.Atoi(pageExpInfos.FindStringSubmatch(content)[1])
+	if len(pageExpInfos.FindStringSubmatch(content)) == 0 {
+		req_struct.Response(c, errno.IndexOutOfRangeErr.Add("pageExpInfos.FindStringSubmatch(content)"), err)
+		return
+	}
+	page, err := strconv.Atoi(pageExpInfos.FindStringSubmatch(content)[1])
+	if err != nil {
+		req_struct.Response(c, errno.RegexpErr.Add("pageExpInfos.FindStringSubmatch(content)"), err)
+		return
+	}
 	if page == 0 {
 		page = 1
 	}
 	p := 1
 	for {
 		if p > 1 {
-			bookmarkReq, _ = http.NewRequest("GET", bookmark + "?rest=show&p=" + strconv.Itoa(p), nil)
-			bookmarkReq.Header.Set("cookie", cookie)
+			bookmarkReq, _ = http.NewRequest("GET", bookmark+"?rest=show&p="+strconv.Itoa(p), nil)
+			bookmarkReq.Header.Set("cookie", conf.cookie)
 			bookmarkResp, err = client.Do(bookmarkReq)
 			if bookmarkResp == nil {
-				_struct.Response(c, errno.ErrCurl.Add("bookmarkwithpage"), err)
+				req_struct.Response(c, errno.CurlErr.Add("bookmarkwithpage"), err)
 				return
 			}
 			buf, _ = ioutil.ReadAll(bookmarkResp.Body)
@@ -90,10 +110,10 @@ func GetList(c *gin.Context, client *http.Client)  {
 			break
 		}
 	}
-	count.Page = p
-	count.Success = 0
-	count.Failed = 0
-	count.Exist = 0
+	conf.count.Page = p
+	conf.count.Success = 0
+	conf.count.Failed = 0
+	conf.count.Exist = 0
 	defer bookmarkResp.Body.Close()
 	size := (page + 1) * 20
 	k := 0
@@ -106,35 +126,34 @@ func GetList(c *gin.Context, client *http.Client)  {
 		imgSlice[k].Title = v[2]
 		imgSlice[k].Url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + v[1]
 		imgSlice[k].Praise = v[3]
-		maxCh <- 1
-		go GetDetail(c, client, imgSlice[k], false)
+		conf.maxCh <- 1
+		go GetDetail(c, client, conf, imgSlice[k], false)
 		k++
 	}
-	count.List = k
+	conf.count.List = k
 	go func() {
-		waitGroup.Wait()
+		conf.waitGroup.Wait()
 	}()
 	fmt.Println("同步pixiv图片结束")
-	_struct.Response(c, nil, count)
+	req_struct.Response(c, nil, conf.count)
+
 	return
 }
 
-func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
-	waitGroup.Add(1)
-	defer waitGroup.Done()
+func GetDetail(c *gin.Context, client *http.Client, conf *Conf, img Img, try bool) {
+	conf.waitGroup.Add(1)
+	defer conf.waitGroup.Done()
 	defer func() {
-		<- maxCh
+		<-conf.maxCh
 	}()
-	lock.Lock()
-	defer lock.Unlock()
+	conf.lock.Lock()
+	defer conf.lock.Unlock()
 	req, _ := http.NewRequest("GET", img.Url, nil)
-	req.Header.Set("cookie", cookie)
+	req.Header.Set("cookie", conf.cookie)
 	res, err := client.Do(req)
 	if err != nil || res == nil {
 		fmt.Println(img.Title + img.ImgId + "imgurl")
-		//errChan <- err
-		//errCodeChan <- errno.ErrCurl.Add(img.Title + img.ImgId + "imgurl")
-		count.Failed += 1
+		conf.count.Failed += 1
 		return
 	}
 	defer res.Body.Close()
@@ -148,9 +167,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		content = contentArr[1]
 	} else {
 		fmt.Println(img.Title + img.ImgId + "未匹配到网页内容")
-		//errChan <- errno.ErrExp.Add(img.Title + img.ImgId + "未匹配到网页内容")
-		//errCodeChan <- errno.ErrExp
-		count.Failed += 1
+		conf.count.Failed += 1
 		return
 	}
 	exp, _ = regexp.Compile(`\\`)
@@ -162,39 +179,33 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 		suffix = suffixArr[1]
 	} else {
 		fmt.Println(img.Title + img.ImgId + "未匹配到类型后缀")
-		//errChan <- errno.ErrExp.Add(img.Title + img.ImgId + "未匹配到类型后缀")
-		//errCodeChan <- errno.ErrExp
-		count.Failed += 1
+		conf.count.Failed += 1
 		return
 	}
 
 	exp, _ = regexp.Compile(`/`)
-	effecTitle := exp.ReplaceAllString(img.Title +  img.ImgId, "-")
+	effecTitle := exp.ReplaceAllString(img.Title+img.ImgId, "-")
 	bucket, err := Bucket()
 	if err != nil {
 		fmt.Println("打开bucket失败")
-		//errChan <- err
-		//errCodeChan <- errno.UploadError.Add("打开bucket失败")
-		count.Failed += 1
+		conf.count.Failed += 1
 		return
 	}
 	isExist, err := bucket.IsObjectExist(effecTitle + suffix)
 	if err != nil {
 		fmt.Println(effecTitle + "判断图片是否存在失败")
-		//errChan <- err
-		//errCodeChan <- errno.UploadError.Add(effecTitle + "判断图片是否存在失败")
-		count.Failed += 1
+		conf.count.Failed += 1
 		return
 	}
 	if isExist == true {
 		fmt.Println(effecTitle + suffix + "已存在")
-		count.Exist += 1
+		conf.count.Exist += 1
 		return
 	}
 
 	imgreq, _ := http.NewRequest("GET", src, nil)
-	imgreq.Header.Set("cookie", cookie)
-	imgreq.Header.Set("Accept",accept)
+	imgreq.Header.Set("cookie", conf.cookie)
+	imgreq.Header.Set("Accept", accept)
 	imgreq.Header.Set("Accept-Encoding", "gzip, deflate, br")
 	imgreq.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7")
 	imgreq.Header.Set("Referer", img.Url)
@@ -209,9 +220,7 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 			createDate = createDateArr[1]
 		} else {
 			fmt.Println(effecTitle + "未匹配到创建时间")
-			//errChan <- errno.ErrExp.Add(effecTitle + "未匹配到创建时间")
-			//errCodeChan <- errno.ErrExp
-			count.Failed += 1
+			conf.count.Failed += 1
 			return
 		}
 		exp, _ = regexp.Compile(`T`)
@@ -228,34 +237,28 @@ func GetDetail(c *gin.Context, client *http.Client, img Img, try bool) {
 	if imgRes.ContentLength > 0 {
 		if err != nil || imgRes == nil {
 			fmt.Println(effecTitle + "imgres")
-			//errChan <- err
-			//errCodeChan <- errno.ErrCurl.Add(effecTitle + "imgres")
-			count.Failed += 1
+			conf.count.Failed += 1
 			return
 		}
 		defer imgRes.Body.Close()
 
 		imgBytes, err := ioutil.ReadAll(imgRes.Body)
 		if err != nil {
-			fmt.Println(effecTitle + "imgBytes")
-			//errChan <- err
-			//errCodeChan <- errno.ErrIoutilReadAll
-			count.Failed += 1
+			fmt.Println(effecTitle + "读取imgBytes失败")
+			conf.count.Failed += 1
 			return
 		}
 
-		err = bucket.PutObject(effecTitle + suffix, bytes.NewReader(imgBytes))
+		err = bucket.PutObject(effecTitle+suffix, bytes.NewReader(imgBytes))
 		if err != nil {
 			fmt.Println(effecTitle + "上传byte数组失败")
-			//errChan <- err
-			//errCodeChan <- errno.UploadError.Add(effecTitle + "上传byte数组失败")
-			count.Failed += 1
+			conf.count.Failed += 1
 			return
 		}
 		fmt.Println(effecTitle + suffix + "上传成功")
-		count.Success += 1
+		conf.count.Success += 1
 	} else {
-		GetDetail(c, client, img, true)
+		GetDetail(c, client, conf, img, true)
 	}
 
 	return

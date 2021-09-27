@@ -34,10 +34,13 @@ func main() {
 	middlewares := []gin.HandlerFunc{}
 
 	router.Load(
-			g,
-			middlewares...,
-		)
+		g,
+		middlewares...,
+	)
 
 	// g.RunTLS(viper.GetString("port"), viper.GetString("fullchain"), viper.GetString("key"))
-	g.Run(viper.GetString("port"))
+	err := g.Run(":" + viper.GetString("port"))
+	if err != nil {
+		panic(err)
+	}
 }
