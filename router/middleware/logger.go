@@ -15,6 +15,7 @@ type bodyLogWriter struct {
 	gin.ResponseWriter
 	body *bytes.Buffer
 }
+
 func (w bodyLogWriter) Write(b []byte) (int, error) {
 	w.body.Write(b)
 	return w.ResponseWriter.Write(b)
@@ -46,6 +47,7 @@ func Logger(c *gin.Context) {
 	}
 
 	log.Info().
+		Str("type", "request").
 		Str("uri", c.Request.RequestURI).
 		Str("method", c.Request.Method).
 		Str("req_ip", realIP).
@@ -63,6 +65,7 @@ func Logger(c *gin.Context) {
 	responseJson, _ := json.Marshal(response)
 
 	log.Info().
+		Str("type", "response").
 		Str("uri", c.Request.RequestURI).
 		Str("method", c.Request.Method).
 		Str("req_ip", realIP).
