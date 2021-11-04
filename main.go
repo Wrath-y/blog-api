@@ -20,7 +20,7 @@ func main() {
 	}
 	runtime.GOMAXPROCS(cpuNum)
 	pflag.Parse()
-	if err := config.Init("/var/www/go-blog/config"); err != nil {
+	if err := config.Init("/var/www/go-blog/config/config.yaml"); err != nil {
 		log.Fatal().Err(err).Msg("init config faild")
 	}
 
