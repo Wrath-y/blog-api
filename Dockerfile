@@ -1,23 +1,17 @@
 FROM golang:latest
 
-MAINTAINER Ysama "ysama.cn"
-
+ENV RUN_MODE release
 ENV ACCESS_KEY_ID id
 ENV ACCESS_KEY_SECRET secret
 ENV HTTP_URL http://127.0.0.1:8081
 ENV DB_URL http://127.0.0.1:3306
 ENV MYSQL_ROOT_PASSWORD 123456
 ENV JWT_SECRET jwt_secret
-ENV GIT_USERNAME username
-ENV GIT_PASSWORD 123456
 
 WORKDIR /var/www
 
 RUN cd /var/www; \
-    touch ~/.git-credentials; \
-    echo https://$GIT_USERNAME:$GIT_PASSWORD@gitee.com >> ~/.git-credentials; \
-    git config --global credential.helper store; \
-    git clone https://gitee.com/ysama/go-blog.git; \
+    git clone https://github.com/Wrath-y/go-blog.git; \
     cd go-blog; \
     cp config/config.example.yaml config/config.yaml; \
     sed -in-place -e "s/url_example/$HTTP_URL/g" config/config.yaml; \

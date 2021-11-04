@@ -17,7 +17,7 @@ type Config struct {
 var IP2LocationDB *ip2location.DB
 
 func Init(cfg string) error {
-	c := Config {
+	c := Config{
 		Name: cfg,
 	}
 
@@ -28,7 +28,7 @@ func Init(cfg string) error {
 	return nil
 }
 
-func (c *Config) initConfig() error  {
+func (c *Config) initConfig() error {
 	if c.Name != "" {
 		viper.SetConfigFile(c.Name)
 	} else {
@@ -45,16 +45,16 @@ func (c *Config) initConfig() error  {
 	}
 
 	// 初始化日志
-	_, pathErr := os.Stat(viper.GetString("log_path"))
+	_, pathErr := os.Stat(viper.GetString("logPath"))
 	if pathErr != nil {
-		makeErr := os.MkdirAll(viper.GetString("log_path"), 0755)
+		makeErr := os.MkdirAll(viper.GetString("logPath"), 0755)
 		if makeErr != nil {
 			log.Fatal().Err(makeErr).Msg("server log path make error")
 		}
 	}
-	zerolog.SetGlobalLevel(zerolog.Level(viper.GetInt("log_level")))
+	zerolog.SetGlobalLevel(zerolog.Level(viper.GetInt("logLevel")))
 	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
-	log.Logger = zerolog.New(logger.NewFileWriter(viper.GetString("log_path"), "blog")).With().Timestamp().Logger()
+	log.Logger = zerolog.New(logger.NewFileWriter(viper.GetString("logPath"), "blog")).With().Timestamp().Logger()
 
 	return nil
 }
