@@ -18,4 +18,4 @@ accessKeySecret: accessKeySecret_example
 bucketName: wrath-pixiv
 # 日志
 logPath: /var/logs/go-blog/
-logLevel: log_level_example
+logLevel: logLevel_example
