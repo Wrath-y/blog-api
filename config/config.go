@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"github.com/ip2location/ip2location-go/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -29,12 +30,10 @@ func Init(cfg string) error {
 }
 
 func (c *Config) initConfig() error {
-	if c.Name != "" {
-		viper.SetConfigFile(c.Name)
-	} else {
-		viper.AddConfigPath("config")
-		viper.SetConfigName("config")
+	if c.Name == "" {
+		return errors.New("未设置配置文件路径")
 	}
+	viper.SetConfigFile(c.Name)
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("BLOG")
