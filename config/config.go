@@ -12,14 +12,14 @@ import (
 )
 
 type Config struct {
-	Name string
+	Path string
 }
 
 var IP2LocationDB *ip2location.DB
 
 func Init(cfg string) error {
 	c := Config{
-		Name: cfg,
+		Path: cfg,
 	}
 
 	if err := c.initConfig(); err != nil {
@@ -30,10 +30,10 @@ func Init(cfg string) error {
 }
 
 func (c *Config) initConfig() error {
-	if c.Name == "" {
+	if c.Path == "" {
 		return errors.New("未设置配置文件路径")
 	}
-	viper.SetConfigFile(c.Name)
+	viper.SetConfigFile(c.Path)
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("BLOG")

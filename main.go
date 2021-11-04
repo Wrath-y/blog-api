@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	cfg = pflag.StringP("config", "c", "", "go-blog config file path")
+	cfg = pflag.StringP("/var/www/go-blog/config", "c", "", "go-blog config file path")
 )
 
 func main() {
