@@ -17,9 +17,9 @@ type Config struct {
 
 var IP2LocationDB *ip2location.DB
 
-func Init(cfg string) error {
+func Init(path string) error {
 	c := Config{
-		Path: cfg,
+		Path: path,
 	}
 
 	if err := c.initConfig(); err != nil {
@@ -30,6 +30,7 @@ func Init(cfg string) error {
 }
 
 func (c *Config) initConfig() error {
+	println(c.Path)
 	if c.Path == "" {
 		return errors.New("未设置配置文件路径")
 	}

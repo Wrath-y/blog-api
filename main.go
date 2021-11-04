@@ -12,10 +12,6 @@ import (
 	"runtime"
 )
 
-var (
-	cfg = pflag.StringP("/var/www/go-blog/config", "c", "", "go-blog config file path")
-)
-
 func main() {
 	var err error
 	cpuNum := runtime.NumCPU() - 1
@@ -24,7 +20,7 @@ func main() {
 	}
 	runtime.GOMAXPROCS(cpuNum)
 	pflag.Parse()
-	if err := config.Init(*cfg); err != nil {
+	if err := config.Init("/var/www/go-blog/config"); err != nil {
 		log.Fatal().Err(err).Msg("init config faild")
 	}
 
