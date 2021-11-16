@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/xjh22222228/ip"
-	"go-blog/req_struct"
+	"go-blog/controller"
 	"io/ioutil"
 	"strings"
 )
@@ -58,7 +58,7 @@ func Logger(c *gin.Context) {
 
 	responseBody := bodyLogWriter.body.String()
 
-	response := req_struct.Rule{}
+	response := controller.Rule{}
 	if responseBody != "" {
 		json.Unmarshal([]byte(responseBody), &response)
 	}

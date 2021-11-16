@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"go-blog/req_struct"
+	"go-blog/controller"
 	"go-blog/server/errno"
 	"io/ioutil"
 	"net/http"
@@ -65,7 +65,7 @@ func GetList(c *gin.Context, client *http.Client, conf *Conf) {
 	bookmarkReq.Header.Set("cookie", conf.cookie)
 	bookmarkResp, err := client.Do(bookmarkReq)
 	if err != nil || bookmarkResp == nil {
-		req_struct.Response(c, errno.CurlErr.Add("bookmark"), err)
+		controller.Response(c, errno.CurlErr.Add("bookmark"), err)
 		return
 	}
 	var buf []byte
@@ -75,12 +75,12 @@ func GetList(c *gin.Context, client *http.Client, conf *Conf) {
 	allContent := content
 	pageExpInfos, _ := regexp.Compile(`w&amp;p=(\d+)[\s\S]*s="next"`)
 	if len(pageExpInfos.FindStringSubmatch(content)) == 0 {
-		req_struct.Response(c, errno.IndexOutOfRangeErr.Add("pageExpInfos.FindStringSubmatch(content)"), err)
+		controller.Response(c, errno.IndexOutOfRangeErr.Add("pageExpInfos.FindStringSubmatch(content)"), err)
 		return
 	}
 	page, err := strconv.Atoi(pageExpInfos.FindStringSubmatch(content)[1])
 	if err != nil {
-		req_struct.Response(c, errno.RegexpErr.Add("pageExpInfos.FindStringSubmatch(content)"), err)
+		controller.Response(c, errno.RegexpErr.Add("pageExpInfos.FindStringSubmatch(content)"), err)
 		return
 	}
 	if page == 0 {
@@ -93,7 +93,7 @@ func GetList(c *gin.Context, client *http.Client, conf *Conf) {
 			bookmarkReq.Header.Set("cookie", conf.cookie)
 			bookmarkResp, err = client.Do(bookmarkReq)
 			if bookmarkResp == nil {
-				req_struct.Response(c, errno.CurlErr.Add("bookmarkwithpage"), err)
+				controller.Response(c, errno.CurlErr.Add("bookmarkwithpage"), err)
 				return
 			}
 			buf, _ = ioutil.ReadAll(bookmarkResp.Body)
@@ -135,7 +135,7 @@ func GetList(c *gin.Context, client *http.Client, conf *Conf) {
 		conf.waitGroup.Wait()
 	}()
 	fmt.Println("同步pixiv图片结束")
-	req_struct.Response(c, nil, conf.count)
+	controller.Response(c, nil, conf.count)
 
 	return
 }

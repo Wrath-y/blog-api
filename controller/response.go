@@ -1,4 +1,4 @@
-package req_struct
+package controller
 
 import (
 	"github.com/gin-gonic/gin"

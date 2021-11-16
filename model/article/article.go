@@ -7,13 +7,19 @@ import (
 
 type Articles struct {
 	model.Base
-	Title 		string  `json:"title"`
-	Image 		string  `json:"image"`
-	Html  		string  `json:"html"`
-	Con   		string  `json:"con"`
-	Tags   		string  `json:"tags"`
-	Status		int     `json:"status"`
-	Source		int     `json:"source"`
+	Title  string `json:"title"`
+	Image  string `json:"image"`
+	Html   string `json:"html"`
+	Con    string `json:"con"`
+	Tags   string `json:"tags"`
+	Hits   string `json:"hits"`
+	Status int    `json:"status"`
+	Source int    `json:"source"`
+}
+
+type ArticlesWebIndex struct {
+	Articles
+	CommentCount int `json:"comment_count"`
 }
 
 func (a *Articles) Create() error {
@@ -37,23 +43,15 @@ func (a *Articles) Update(id int) error {
 	return model.DB.Self.Model(a).Update(a).Error
 }
 
-func Index(page, limit int) ([]*Articles, int, error) {
+func Index(lastId, limit int) ([]*ArticlesWebIndex, error) {
 	if limit == 0 {
 		limit = 6
 	}
 
-	articles := make([]*Articles, 0)
-	var count int
+	articlesWebIndex := make([]*ArticlesWebIndex, 0)
+	err := model.DB.Self.Table("articles").Where("id > ?", lastId).Limit(limit).Order("id desc").Find(&articlesWebIndex).Error
 
-	if err := model.DB.Self.Model(&Articles{}).Count(&count).Error; err != nil {
-		return articles, count, err
-	}
-
-	if err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&articles).Error; err != nil {
-		return articles, count, err
-	}
-
-	return articles, count, nil
+	return articlesWebIndex, err
 }
 
 func Show(id int) (*Articles, error) {

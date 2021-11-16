@@ -7,15 +7,14 @@ import (
 
 type Harem struct {
 	model.Base
-	Name	string `json:"name"`
-	Email	string `json:"email"`
-	Url		string `json:"url"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Url   string `json:"url"`
 }
 
 func (h *Harem) Create() error {
 	h.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
 	h.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
-
 
 	return model.DB.Self.Create(h).Error
 }
@@ -34,23 +33,16 @@ func (h *Harem) Update(id int) error {
 	return model.DB.Self.Model(h).Update(h).Error
 }
 
-func Index(page, limit int) ([]*Harem, int, error) {
+func Index(page, limit int) ([]*Harem, error) {
 	if limit == 0 {
 		limit = 6
 	}
 
 	harems := make([]*Harem, 0)
-	var count int
 
-	if err := model.DB.Self.Model(&Harem{}).Count(&count).Error; err != nil {
-		return harems, count, err
-	}
+	err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&harems).Error
 
-	if err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&harems).Error; err != nil {
-		return harems, count, err
-	}
-
-	return harems, count, nil
+	return harems, err
 }
 
 func Show(id int) (*Harem, error) {

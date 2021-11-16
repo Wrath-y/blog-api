@@ -1,4 +1,4 @@
-package upload
+package admin
 
 import (
 	"crypto/hmac"
@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"go-blog/req_struct"
+	"go-blog/controller"
 	"go-blog/server/errno"
 	"hash"
 	"time"
@@ -55,7 +55,7 @@ func GetGmtIso8601(expireEnd int64) string {
 	return tokenExpire
 }
 
-func Index(c *gin.Context) {
+func GetUpload(c *gin.Context) {
 	accessKeyId := viper.GetString("accessKeyId")
 	accessKeySecret := viper.GetString("accessKeySecret")
 	// host的格式为 bucketname.endpoint
@@ -93,7 +93,7 @@ func Index(c *gin.Context) {
 
 	//policy, err := json.Marshal(policyToken)
 	if err != nil {
-		req_struct.Response(c, errno.UploadErr, err)
+		controller.Response(c, errno.UploadErr, err)
 
 		return
 	}
@@ -111,7 +111,7 @@ func Index(c *gin.Context) {
 		Headers:   []int{},
 		UploadUrl: policyToken.Host,
 	}
-	req_struct.Response(c, nil, response)
+	controller.Response(c, nil, response)
 
 	return
 }
