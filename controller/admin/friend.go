@@ -3,7 +3,7 @@ package admin
 import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller"
-	"go-blog/model/harem"
+	"go-blog/model/friend"
 	"go-blog/server/errno"
 	"strconv"
 )
@@ -21,7 +21,7 @@ func AddFriend(c *gin.Context) {
 		return
 	}
 
-	res := &harem.Harem{
+	res := &friend.Friend{
 		Name:  r.Name,
 		Email: r.Email,
 		Url:   r.Url,
@@ -39,7 +39,7 @@ func AddFriend(c *gin.Context) {
 func DelFriend(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	if err := harem.Delete(id); err != nil {
+	if err := friend.Delete(id); err != nil {
 		controller.Response(c, errno.DatabaseError, nil)
 		return
 	}
@@ -57,7 +57,7 @@ func UpdateFriend(c *gin.Context) {
 		return
 	}
 
-	res := &harem.Harem{
+	res := &friend.Friend{
 		Name:  r.Name,
 		Email: r.Email,
 		Url:   r.Url,
@@ -77,7 +77,7 @@ func GetFriends(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data, err := harem.Index(page, 15)
+	data, err := friend.Index(page, 15)
 
 	if err != nil {
 		controller.Response(c, err, nil)
@@ -91,7 +91,7 @@ func GetFriends(c *gin.Context) {
 
 func GetFriend(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	res, err := harem.Show(id)
+	res, err := friend.Show(id)
 	if err != nil {
 		controller.Response(c, errno.DatabaseError, nil)
 		return

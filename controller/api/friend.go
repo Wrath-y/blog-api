@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller"
-	"go-blog/model/harem"
+	"go-blog/model/friend"
 	"strconv"
 )
 
@@ -12,7 +12,7 @@ func GetFriends(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data, err := harem.Index(page, 15)
+	data, err := friend.Index(page, 15)
 
 	if err != nil {
 		controller.Response(c, err, nil)
