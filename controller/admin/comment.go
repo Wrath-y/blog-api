@@ -13,12 +13,15 @@ func GetComments(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data, err := comment.Index(page, 15)
+	data, count, err := comment.AdminIndex(page, 15)
 	if err != nil {
-		controller.Response(c, err, err)
+		controller.Response(c, errno.DatabaseError, err)
 		return
 	}
-	controller.Response(c, nil, data)
+	controller.Response(c, nil, map[string]interface{}{
+		"list":  data,
+		"count": count,
+	})
 	return
 }
 

@@ -43,13 +43,21 @@ func (a *Articles) Update(id int) error {
 	return model.DB.Self.Model(a).Update(a).Error
 }
 
-func Index(lastId, limit int) ([]*ArticlesWebIndex, error) {
-	if limit == 0 {
-		limit = 6
+func AdminIndex(page, limit int) ([]*Articles, int, error) {
+	var count int
+	if err := model.DB.Self.Model(&Articles{}).Count(&count).Error; err != nil {
+		return nil, count, err
 	}
 
+	articles := make([]*Articles, 0)
+	err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&articles).Error
+
+	return articles, count, err
+}
+
+func WebIndex(lastId, limit int) ([]*ArticlesWebIndex, error) {
 	articlesWebIndex := make([]*ArticlesWebIndex, 0)
-	err := model.DB.Self.Table("articles").Where("id > ?", lastId).Limit(limit).Order("id desc").Find(&articlesWebIndex).Error
+	err := model.DB.Self.Table("articles").Where("id > ?", lastId).Where("status = 1").Limit(limit).Order("id desc").Find(&articlesWebIndex).Error
 
 	return articlesWebIndex, err
 }

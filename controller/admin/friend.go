@@ -77,14 +77,17 @@ func GetFriends(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	data, err := friend.Index(page, 15)
 
+	data, count, err := friend.AdminIndex(page, 15)
 	if err != nil {
-		controller.Response(c, err, nil)
+		controller.Response(c, errno.DatabaseError, err)
 		return
 	}
 
-	controller.Response(c, nil, data)
+	controller.Response(c, nil, map[string]interface{}{
+		"list":  data,
+		"count": count,
+	})
 
 	return
 }

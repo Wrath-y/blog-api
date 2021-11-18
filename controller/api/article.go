@@ -16,7 +16,7 @@ func GetArticles(c *gin.Context) {
 		return
 	}
 
-	articles, err := article.Index(page, 15)
+	articles, err := article.WebIndex(page, 6)
 
 	if err != nil {
 		controller.Response(c, err, nil)

@@ -33,16 +33,28 @@ func (h *Friend) Update(id int) error {
 	return model.DB.Self.Model(h).Update(h).Error
 }
 
-func Index(page, limit int) ([]*Friend, error) {
+func WebIndex() ([]*Friend, error) {
+	harems := make([]*Friend, 0)
+
+	err := model.DB.Self.Order("id desc").Find(&harems).Error
+
+	return harems, err
+}
+
+func AdminIndex(page, limit int) ([]*Friend, int, error) {
 	if limit == 0 {
 		limit = 6
 	}
 
-	harems := make([]*Friend, 0)
+	friend := make([]*Friend, 0)
+	var count int
 
-	err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&harems).Error
+	if err := model.DB.Self.Model(&Friend{}).Count(&count).Error; err != nil {
+		return friend, count, err
+	}
+	err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Order("id desc").Find(&friend).Error
 
-	return harems, err
+	return friend, count, err
 }
 
 func Show(id int) (*Friend, error) {

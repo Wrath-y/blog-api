@@ -22,15 +22,20 @@ type ArticlesWebCommentCount struct {
 	CommentCount int `json:"comment_count"`
 }
 
-func Index(page, limit int) ([]*Comment, error) {
+func AdminIndex(page, limit int) ([]*Comment, int, error) {
 	if limit == 0 {
 		limit = 6
+	}
+
+	var count int
+	if err := model.DB.Self.Model(&Comment{}).Count(&count).Error; err != nil {
+		return nil, count, err
 	}
 
 	comments := make([]*Comment, 0)
 	err := model.DB.Self.Offset((page - 1) * limit).Limit(limit).Find(&comments).Error
 
-	return comments, err
+	return comments, count, err
 }
 
 func IndexBuyArticleId(articleId, lastId, limit int) ([]*Comment, error) {
