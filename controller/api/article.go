@@ -10,13 +10,13 @@ import (
 )
 
 func GetArticles(c *gin.Context) {
-	page, err := strconv.Atoi(c.DefaultQuery("last_id", "0"))
+	lastId, err := strconv.Atoi(c.DefaultQuery("last_id", "0"))
 	if err != nil {
 		controller.Response(c, err, nil)
 		return
 	}
 
-	articles, err := article.WebIndex(page, 6)
+	articles, err := article.WebIndex(lastId, 6)
 
 	if err != nil {
 		controller.Response(c, err, nil)

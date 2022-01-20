@@ -56,8 +56,8 @@ func AdminIndex(page, limit int) ([]*Articles, int, error) {
 }
 
 func WebIndex(lastId, limit int) ([]*ArticlesWebIndex, error) {
-	articlesWebIndex := make([]*ArticlesWebIndex, 0)
-	err := model.DB.Self.Table("articles").Where("id > ?", lastId).Where("status = 1").Limit(limit).Order("id desc").Find(&articlesWebIndex).Error
+	var articlesWebIndex []*ArticlesWebIndex
+	err := model.DB.Self.Table("articles").Where("id < ?", lastId).Where("status = 1").Limit(limit).Order("id desc").Find(&articlesWebIndex).Error
 
 	return articlesWebIndex, err
 }
