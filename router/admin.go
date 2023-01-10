@@ -4,12 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller/admin"
 	"go-blog/controller/health_check"
-	"go-blog/controller/user"
 	"go-blog/router/middleware"
 )
 
 func loadAdmin(g *gin.Engine) {
-	g.POST("/login", user.Login)
+	g.POST("/login", admin.Login)
 
 	a := g.Group("/admin")
 	a.Use(middleware.Auth())
