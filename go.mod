@@ -9,7 +9,7 @@ require (
 	github.com/ip2location/ip2location-go/v9 v9.0.0
 	github.com/jinzhu/gorm v1.9.1
 	github.com/rs/zerolog v1.20.0
-	github.com/shirou/gopsutil v2.17.12+incompatible
+	github.com/shirou/gopsutil v2.21.11+incompatible
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.2.1
 	github.com/xjh22222228/ip v1.0.1
@@ -25,7 +25,7 @@ require (
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
-	github.com/go-ole/go-ole v1.2.1 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -46,9 +46,12 @@ require (
 	github.com/spf13/cast v1.2.0 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
+	github.com/tklauser/go-sysconf v0.3.11 // indirect
+	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/ugorji/go/codec v0.0.0-20180920200043-2c86ab75771c // indirect
+	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
-	golang.org/x/sys v0.0.0-20200316230553-a7d97aace0b0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/appengine v1.3.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
