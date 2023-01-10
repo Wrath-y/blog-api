@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller/admin"
 	"go-blog/controller/health_check"
-	"go-blog/router/middleware"
+	"go-blog/middleware"
 )
 
 func loadAdmin(g *gin.Engine) {
