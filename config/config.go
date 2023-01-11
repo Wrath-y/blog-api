@@ -30,9 +30,9 @@ func (c *Config) initConfig() error {
 	if c.Path == "" {
 		return errors.New("未设置配置文件路径")
 	}
+	viper.SetConfigName("conf")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(c.Path)
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("BLOG")
 	replacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(replacer)
 	if err := viper.ReadInConfig(); err != nil {

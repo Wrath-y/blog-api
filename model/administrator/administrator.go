@@ -2,6 +2,7 @@ package administrator
 
 import (
 	"go-blog/model"
+	"go-blog/pkg/db"
 )
 
 type Administrators struct {
@@ -17,5 +18,5 @@ type Token struct {
 func GetUserByName(account string) (*Administrators, error) {
 	a := &Administrators{}
 
-	return a, model.DB.Self.Where("account = ?", account).First(&a).Error
+	return a, db.Orm.Where("account = ?", account).First(&a).Error
 }

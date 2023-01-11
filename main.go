@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go-blog/config"
-	"go-blog/model"
 	"go-blog/router"
 	"runtime"
 )
@@ -25,9 +24,6 @@ func main() {
 	if err := config.Init("config"); err != nil {
 		log.Fatal().Err(err).Msg("init config faild")
 	}
-
-	model.DB.Init()
-	defer model.DB.Close()
 
 	gin.SetMode(viper.GetString("runmode"))
 	g := gin.New()
