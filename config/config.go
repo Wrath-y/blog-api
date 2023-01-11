@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"github.com/ip2location/ip2location-go/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -14,8 +13,6 @@ import (
 type Config struct {
 	Path string
 }
-
-var IP2LocationDB *ip2location.DB
 
 func Init(path string) error {
 	c := Config{

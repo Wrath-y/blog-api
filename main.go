@@ -12,6 +12,8 @@ import (
 	"runtime"
 )
 
+var IP2LocationDB *ip2location.DB
+
 func main() {
 	var err error
 	cpuNum := runtime.NumCPU() - 1
@@ -33,8 +35,8 @@ func main() {
 	router.Load(g)
 
 	// IP转区号
-	config.IP2LocationDB, err = ip2location.OpenDB("./IP2LOCATION-LITE-DB1.BIN")
-	defer config.IP2LocationDB.Close()
+	IP2LocationDB, err = ip2location.OpenDB("./IP2LOCATION-LITE-DB1.BIN")
+	defer IP2LocationDB.Close()
 	if err != nil {
 		log.Fatal().Err(err).Msg("./IP2LOCATION-LITE-DB1.BIN open faild")
 	}
