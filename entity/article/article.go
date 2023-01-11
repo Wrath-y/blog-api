@@ -1,13 +1,13 @@
 package article
 
 import (
-	"go-blog/model"
+	"go-blog/entity"
 	"go-blog/pkg/db"
 	"time"
 )
 
 type Articles struct {
-	model.Base
+	entity.Base
 	Title  string `json:"title"`
 	Image  string `json:"image"`
 	Html   string `json:"html"`

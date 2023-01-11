@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller"
-	"go-blog/model/friend"
+	"go-blog/entity/friend"
 )
 
 func GetFriends(c *gin.Context) {

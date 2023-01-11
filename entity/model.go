@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"

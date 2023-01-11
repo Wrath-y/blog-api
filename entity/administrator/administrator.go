@@ -1,12 +1,12 @@
 package administrator
 
 import (
-	"go-blog/model"
+	"go-blog/entity"
 	"go-blog/pkg/db"
 )
 
 type Administrators struct {
-	model.Base
+	entity.Base
 	Account  string `json:"account"`
 	Password string `json:"password"`
 }

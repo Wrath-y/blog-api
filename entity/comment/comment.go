@@ -1,13 +1,13 @@
 package comment
 
 import (
-	"go-blog/model"
+	"go-blog/entity"
 	"go-blog/pkg/db"
 	"time"
 )
 
 type Comment struct {
-	model.Base
+	entity.Base
 	Name      string `json:"name" gorm:"name"`
 	Email     string `json:"email" gorm:"email"`
 	Url       string `json:"url" gorm:"url"`

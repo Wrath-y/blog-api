@@ -3,7 +3,7 @@ package admin
 import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller"
-	"go-blog/model/article"
+	"go-blog/entity/article"
 	"go-blog/server/errno"
 	"strconv"
 )

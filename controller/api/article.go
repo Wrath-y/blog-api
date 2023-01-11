@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller"
-	"go-blog/model/article"
-	"go-blog/model/comment"
+	"go-blog/entity/article"
+	"go-blog/entity/comment"
 	"go-blog/server/errno"
 	"strconv"
 )

@@ -1,13 +1,13 @@
 package friend
 
 import (
-	"go-blog/model"
+	"go-blog/entity"
 	"go-blog/pkg/db"
 	"time"
 )
 
 type Friend struct {
-	model.Base
+	entity.Base
 	Name  string `json:"name"`
 	Email string `json:"email"`
 	Url   string `json:"url"`

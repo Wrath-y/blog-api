@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"go-blog/controller"
-	"go-blog/model/comment"
+	"go-blog/entity/comment"
 	"go-blog/server/errno"
 	"strconv"
 )
