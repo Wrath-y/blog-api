@@ -1,0 +1,21 @@
+runmode: debug # debug, release, test
+port: 8081
+name: blog
+database:
+  name: blog
+  url: 127.0.0.1
+  port: 3306
+  username: root
+  password: 123456
+  params: charset=utf8&parseTime=True&loc=Asia/Shanghai
+mysqllog: true
+jwtSecret: jwt_secret_example
+# 阿里云
+uploadUrl: https://wrath-pixiv.oss-cn-shanghai.aliyuncs.com
+endPoint: oss-cn-shanghai.aliyuncs.com
+accessKeyId: LTAIcwcmUuwjpKys
+accessKeySecret: RY7yj3Otoz2UgEaD5YxtcDZfpvDxgx
+bucketName: wrath-pixiv
+# 日志
+logPath: /Users/wrath/Documents/myspace/go-blog/logs/go-blog/
+logLevel: 1
