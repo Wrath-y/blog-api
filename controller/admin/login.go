@@ -3,7 +3,6 @@ package admin
 import (
 	"github.com/gin-gonic/gin"
 	"go-blog/controller"
-	"go-blog/model"
 	"go-blog/model/administrator"
 	"go-blog/server/auth"
 	"go-blog/server/errno"
@@ -50,7 +49,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	controller.Response(c, nil, model.Token{Token: t})
+	controller.Response(c, nil, administrator.Token{Token: t})
 
 	return
 }

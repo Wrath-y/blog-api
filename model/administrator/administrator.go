@@ -10,6 +10,10 @@ type Administrators struct {
 	Password string `json:"password"`
 }
 
+type Token struct {
+	Token string `json:"token"`
+}
+
 func GetUserByName(account string) (*Administrators, error) {
 	a := &Administrators{}
 
