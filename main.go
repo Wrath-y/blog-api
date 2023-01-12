@@ -4,6 +4,7 @@ import (
 	"blog-api/pkg/config"
 	"blog-api/pkg/db"
 	"blog-api/pkg/def"
+	"blog-api/pkg/goredis"
 	"blog-api/pkg/httplib"
 	"blog-api/pkg/logging"
 	"blog-api/router"
@@ -29,6 +30,7 @@ func setup() {
 	// 监听nacos变化，发现变化后会自动同步到本地，同时杀掉当前进程（之后pod拉起）
 	config.ListenNacos(logging.New(), httplib.NewClient(httplib.WithTimeout(30*time.Second)))
 	db.Setup()
+	goredis.Setup()
 }
 
 func main() {

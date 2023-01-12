@@ -11,9 +11,14 @@ nacos:
   data_id: blog_api_conf.yaml
   group: blog
   namespace_id: daa81bff-7255-4554-a66e-69d880ede774
+  poll_time: 60
 redis:
   default:
-    address: 10.64.144.159:6379
+    address: 127.0.0.1:6379
+    min_idle_conns: 5
+    pool_size: 200
+  log:
+    address: 127.0.0.1:6379
     min_idle_conns: 5
     pool_size: 200
 mysql:
