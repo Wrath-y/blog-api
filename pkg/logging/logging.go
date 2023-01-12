@@ -1,8 +1,14 @@
 package logging
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"log"
+	"os"
 	"runtime"
 	"strconv"
 	"sync"
@@ -19,10 +25,21 @@ const (
 )
 
 var (
-	topic string
-	logfn logFunc
-	mu    sync.Mutex
+	topic      string
+	logfn      logFunc
+	mu         sync.Mutex
+	once       = &sync.Once{}
+	lastHandle *os.File
+	filePath   = "docs/log/wrath.cc/"
+	current    = filePath + "access.log"
+	renameFmt  = filePath + "access.20060102150405.log"
+	logHandle  = &logrus.Logger{
+		Formatter: &SimpleFormatter{},
+		Level:     logrus.InfoLevel,
+	}
 )
+
+type SimpleFormatter struct{}
 
 type logFunc func([]byte)
 
@@ -56,6 +73,7 @@ func Setup(t string, fn logFunc) {
 
 	topic = t
 	logfn = fn
+	writeToFile()
 }
 
 func New() *logger {
@@ -86,6 +104,8 @@ func covert(val interface{}) interface{} {
 		return v.String()
 	case []byte:
 		return string(v)
+	case nil:
+		return ""
 	default:
 		return v
 	}
@@ -145,6 +165,31 @@ func (l *logger) Fatal(message string, request, response interface{}, t ...time.
 	}
 }
 
+func (*SimpleFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	var b *bytes.Buffer
+	if entry.Buffer != nil {
+		b = entry.Buffer
+	} else {
+		b = &bytes.Buffer{}
+	}
+	b.WriteString(fmt.Sprintf("%s\n", entry.Message))
+	return b.Bytes(), nil
+}
+
+func FileLogger(data []byte) {
+	logHandle.Printf("%s", string(data))
+}
+
+func StdoutLogger(data []byte) {
+	var logMsg LogMsg
+	json.Unmarshal(data, &logMsg) // nolint
+	if logMsg.Level == InfoLevel {
+		fmt.Fprintf(os.Stdout, string(data)+"\n\n")
+	} else {
+		fmt.Fprintf(os.Stdout, color.RedString(string(data))+"\n\n")
+	}
+}
+
 // getFilterCallers 获取调用栈
 func getFilterCallers() (file string, line int, ok bool) {
 	for i := 2; i < 6; i++ {
@@ -156,4 +201,39 @@ func getFilterCallers() (file string, line int, ok bool) {
 		return file, line, ok
 	}
 	return
+}
+
+func writeToFile() {
+	if viper.GetString("app.log.output") != "file" {
+		return
+	}
+
+	once.Do(func() {
+		file, err := os.OpenFile(current, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalln("打开日志文件失败：", err)
+		}
+		lastHandle = file
+		logHandle.SetOutput(file)
+
+		go func() {
+			tick := time.Tick(time.Second * 7)
+			for t := range tick {
+				info, _ := lastHandle.Stat()
+				if info.Size() > 300<<20 {
+					os.Rename(current, t.Format(renameFmt)) //nolint
+					f, err := os.OpenFile(current, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+					if err == nil {
+						logHandle.SetOutput(f)
+						lastHandle.Close()
+						lastHandle = f
+					}
+				}
+				dirs, _ := os.ReadDir(filePath)
+				if len(dirs) > 3 { // 超过3个删除最旧的
+					os.Remove(filePath + dirs[0].Name())
+				}
+			}
+		}()
+	})
 }

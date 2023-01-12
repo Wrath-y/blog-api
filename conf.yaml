@@ -1,0 +1,32 @@
+app:
+  env: development
+  log:
+    topic: wrath.cc
+    key: sys:log:list
+    output: stdout
+nacos:
+  address: http://localhost:8848
+  username: nacos
+  password: qwe763zxc
+  data_id: blog_api_conf.yaml
+  group: blog
+  namespace_id: daa81bff-7255-4554-a66e-69d880ede774
+redis:
+  default:
+    address: 10.64.144.159:6379
+    min_idle_conns: 5
+    pool_size: 200
+mysql:
+  default:
+    address: 127.0.0.1:3306
+    username: root
+    password: 123456
+    database: blog
+    max_idle_conns: 5
+    max_open_conns: 20
+aliyun.oss:
+  endpoint: oss-cn-shanghai.aliyuncs.com
+  vs.bucket: wrath-pixiv
+  access_keyid: LTAIcwcmUuwjpKys
+  access_keysecret: RY7yj3Otoz2UgEaD5YxtcDZfpvDxgx
+jwt_secret: jwt_secret_example1

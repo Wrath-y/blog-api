@@ -195,6 +195,9 @@ func convertHTTPHeader(header http.Header) map[string]interface{} {
 }
 
 func getRequestID(ctx Context) string {
+	if ctx == nil {
+		return ""
+	}
 	value, exist := ctx.Get(requestID)
 	if !exist {
 		return ""
@@ -207,6 +210,9 @@ func getRequestID(ctx Context) string {
 }
 
 func getV1(ctx Context) string {
+	if ctx == nil {
+		return ""
+	}
 	value, exist := ctx.Get(v1)
 	if !exist {
 		return ""
@@ -219,6 +225,9 @@ func getV1(ctx Context) string {
 }
 
 func getV2(ctx Context) string {
+	if ctx == nil {
+		return ""
+	}
 	value, exist := ctx.Get(v2)
 	if !exist {
 		return ""
@@ -231,6 +240,9 @@ func getV2(ctx Context) string {
 }
 
 func getV3(ctx Context) string {
+	if ctx == nil {
+		return ""
+	}
 	value, exist := ctx.Get(v3)
 	if !exist {
 		return ""
