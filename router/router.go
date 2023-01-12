@@ -1,25 +1,26 @@
 package router
 
 import (
+	"blog-api/core"
+	"blog-api/errcode"
+	"blog-api/middleware"
 	"github.com/gin-gonic/gin"
-	"go-blog/controller"
-	middleware2 "go-blog/middleware"
-	"go-blog/server/errno"
+	"net/http"
 )
 
 func Register() *gin.Engine {
-	g := gin.New()
-	// middleware
-	g.Use(gin.Recovery())
-	g.Use(middleware2.Logger)
-	g.Use(middleware2.NoCache)
-	g.Use(middleware2.Options)
-	g.NoRoute(func(c *gin.Context) {
-		controller.Response(c, errno.RouteError, nil)
-	})
+	r := gin.New()
+	r.Use(middleware.Recovery)
+	r.Use(middleware.SetV())
+	r.Use(core.Handle(middleware.CORS))
+	r.NoRoute(NoRoute)
 
-	loadAdmin(g)
+	g := r.Group("/")
 	loadApi(g)
 
-	return g
+	return r
+}
+
+func NoRoute(c *gin.Context) {
+	c.AbortWithStatusJSON(http.StatusNotFound, errcode.LibNoRoute)
 }

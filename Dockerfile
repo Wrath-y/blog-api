@@ -11,7 +11,7 @@ ENV JWT_SECRET jwt_secret
 WORKDIR /var/www
 
 RUN cd /var/www; \
-    git clone https://github.com/Wrath-y/go-blog.git; \
+    git clone https://github.com/Wrath-y/blog-api.git; \
     cd go-blog; \
     cp config/config.example.yaml config/config.yaml; \
     sed -in-place -e "s/url_example/$HTTP_URL/g" config/config.yaml; \

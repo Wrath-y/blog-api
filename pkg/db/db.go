@@ -1,10 +1,10 @@
 package db
 
 import (
+	"blog-api/pkg/def"
+	"blog-api/pkg/logging"
 	"context"
 	"github.com/spf13/viper"
-	"go-blog/pkg/def"
-	"go-blog/pkg/logging"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	glog "gorm.io/gorm/logger"

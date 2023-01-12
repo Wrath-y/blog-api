@@ -1,36 +1,47 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"go-blog/controller"
-	"go-blog/entity/article"
-	"go-blog/entity/comment"
-	"go-blog/server/errno"
+	resp2 "blog-api/controller/resp"
+	"blog-api/core"
+	"blog-api/entity"
+	"blog-api/errcode"
 	"strconv"
 )
 
-func GetArticles(c *gin.Context) {
-	lastId, err := strconv.Atoi(c.DefaultQuery("last_id", "0"))
+func GetArticles(c *core.Context) {
+	var (
+		logMap = make(map[string]interface{})
+	)
+
+	lastIdStr := c.DefaultQuery("last_id", "0")
+	logMap["lastIdStr"] = lastIdStr
+
+	lastId, err := strconv.Atoi(lastIdStr)
 	if err != nil {
-		controller.Response(c, err, nil)
+		c.ErrorL("转换格式失败", logMap, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
-	articles, err := article.WebIndex(lastId, 6)
-
+	articles, err := new(entity.Article).FindByLastId(lastId, 6)
 	if err != nil {
-		controller.Response(c, err, nil)
+		c.ErrorL("获取文章列表失败", logMap, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
+	logMap["articles"] = articles
+	resp := make([]*resp2.GetArticlesResp, 0, len(articles))
 
 	articleIds := make([]int, 0, len(articles))
 	for _, v := range articles {
 		articleIds = append(articleIds, v.Id)
 	}
+	logMap["articleIds"] = articleIds
 
-	commentCounts, err := comment.GetArticlesWebCommentCounts(articleIds)
+	commentCounts, err := new(entity.Comment).GetArticlesWebCommentCounts(articleIds)
 	if err != nil {
-		controller.Response(c, err, nil)
+		c.ErrorL("获取评论失败", logMap, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
@@ -40,25 +51,25 @@ func GetArticles(c *gin.Context) {
 	}
 
 	for _, v := range articles {
-		if _, ok := articleCommentCountMap[v.Id]; !ok {
-			continue
+		data := &resp2.GetArticlesResp{
+			Article: v,
 		}
-		v.CommentCount = articleCommentCountMap[v.Id]
+		if articleCommentCount, ok := articleCommentCountMap[v.Id]; ok {
+			data.CommentCount = articleCommentCount
+		}
 	}
 
-	controller.Response(c, nil, articles)
-
-	return
+	c.Success(resp)
 }
 
-func GetArticle(c *gin.Context) {
+func GetArticle(c *core.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	res, err := article.Show(id)
+	res, err := new(entity.Article).GetById(id)
 	if err != nil {
-		controller.Response(c, errno.DatabaseError, nil)
+		c.ErrorL("获取文章失败", id, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
-	controller.Response(c, nil, res)
 
-	return
+	c.Success(res)
 }

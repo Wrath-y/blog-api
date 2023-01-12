@@ -1,17 +1,17 @@
 package main
 
 import (
+	"blog-api/pkg/config"
+	"blog-api/pkg/db"
+	"blog-api/pkg/def"
+	"blog-api/pkg/httplib"
+	"blog-api/pkg/logging"
+	"blog-api/router"
 	"context"
 	"github.com/fatih/color"
 	"github.com/gin-gonic/gin"
 	"github.com/ip2location/ip2location-go/v9"
 	"github.com/spf13/viper"
-	"go-blog/pkg/config"
-	"go-blog/pkg/db"
-	"go-blog/pkg/def"
-	"go-blog/pkg/httplib"
-	"go-blog/pkg/logging"
-	"go-blog/router"
 	"log"
 	"net/http"
 	"os"

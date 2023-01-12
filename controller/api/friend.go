@@ -1,20 +1,18 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"go-blog/controller"
-	"go-blog/entity/friend"
+	"blog-api/core"
+	"blog-api/entity"
+	"blog-api/errcode"
 )
 
-func GetFriends(c *gin.Context) {
-	data, err := friend.WebIndex()
-
+func GetFriends(c *core.Context) {
+	data, err := new(entity.FriendLink).FindAll()
 	if err != nil {
-		controller.Response(c, err, nil)
+		c.ErrorL("获取友链失败", nil, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
-	controller.Response(c, nil, data)
-
-	return
+	c.Success(data)
 }

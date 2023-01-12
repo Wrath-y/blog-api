@@ -1,28 +1,33 @@
 package router
 
 import (
+	"blog-api/controller/api"
+	"blog-api/core"
+	"blog-api/middleware"
 	"github.com/gin-gonic/gin"
-	"go-blog/controller/api"
 )
 
-func loadApi(g *gin.Engine) {
-	g.GET("/pixivs", api.GetPixivs)
-
-	h := g.Group("friends")
+func loadApi(r *gin.RouterGroup) {
+	a := r.Group("/", core.Handle(middleware.Logging), core.Handle(middleware.TimeLocation))
 	{
-		h.GET("", api.GetFriends)
-	}
+		a.GET("/pixivs", core.Handle(api.GetPixivs))
 
-	a := g.Group("articles")
-	{
-		a.GET("", api.GetArticles)
-		a.GET("/:id", api.GetArticle)
-	}
+		h := a.Group("friends")
+		{
+			h.GET("", core.Handle(api.GetFriends))
+		}
 
-	c := g.Group("comments")
-	{
-		c.GET("", api.GetComments)
-		c.GET("/count", api.GetCommentCount)
-		c.POST("", api.AddComment)
+		ar := a.Group("articles")
+		{
+			ar.GET("", core.Handle(api.GetArticles))
+			ar.GET("/:id", core.Handle(api.GetArticle))
+		}
+
+		cm := a.Group("comments")
+		{
+			cm.GET("", core.Handle(api.GetComments))
+			cm.GET("/count", core.Handle(api.GetCommentCount))
+			cm.POST("", core.Handle(api.AddComment))
+		}
 	}
 }

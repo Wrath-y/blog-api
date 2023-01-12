@@ -1,12 +1,12 @@
 package api
 
 import (
+	"blog-api/core"
+	"blog-api/entity"
+	"blog-api/errcode"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"go-blog/controller"
-	"go-blog/entity/comment"
-	"go-blog/server/errno"
 	"strconv"
+	"time"
 )
 
 type CommentRequest struct {
@@ -19,72 +19,66 @@ type CommentRequest struct {
 	Url       string `json:"url" binding:"required"`
 }
 
-func GetComments(c *gin.Context) {
+func GetComments(c *core.Context) {
+	logMap := make(map[string]interface{})
 	lastId, err := strconv.Atoi(c.DefaultQuery("last_id", "1"))
 	if err != nil {
 		panic(err)
 	}
+	logMap["lastId"] = lastId
 	articleId, err := strconv.Atoi(c.DefaultQuery("article_id", "0"))
 	if err != nil {
 		panic(err)
 	}
-	data, err := comment.IndexBuyArticleId(articleId, lastId, 15)
+	logMap["articleId"] = articleId
+	list, err := new(entity.Comment).FindByArticleIdLastId(articleId, lastId, 15)
 	if err != nil {
-		controller.Response(c, err, nil)
+		c.ErrorL("获取评论失败", logMap, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
-	controller.Response(c, nil, data)
-	return
+
+	c.Success(list)
 }
 
-func DelComment(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	if err := comment.Delete(id); err != nil {
-		controller.Response(c, errno.DatabaseError, nil)
-		return
-	}
-	controller.Response(c, nil, nil)
-	return
-}
-
-func AddComment(c *gin.Context) {
+func AddComment(c *core.Context) {
 	var r CommentRequest
 	if err := c.ShouldBindJSON(&r); err != nil {
-		controller.Response(c, errno.BindError, err)
+		c.FailWithErrCode(errcode.WebInvalidParam, nil)
 		return
 	}
 
-	jsonByte, err := json.Marshal(r)
+	jsonByte, _ := json.Marshal(r)
+	comment := new(entity.Comment)
+	err := json.Unmarshal(jsonByte, comment)
 	if err != nil {
-		controller.Response(c, errno.BindError, err)
-		return
-	}
-	res := new(comment.Comment)
-	err = json.Unmarshal(jsonByte, res)
-	if err != nil {
-		controller.Response(c, errno.BindError, err)
+		c.ErrorL("反序列化失败", r, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
-	if err := res.Create(); err != nil {
-		controller.Response(c, errno.DatabaseError, err)
+	comment.CreatedAt = time.Now().In(c.TimeLocation)
+	comment.UpdatedAt = time.Now().In(c.TimeLocation)
+	if err := comment.Create(); err != nil {
+		c.ErrorL("添加评论失败", comment, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
-	controller.Response(c, nil, res)
-	return
+	c.Success(comment)
 }
 
-func GetCommentCount(c *gin.Context) {
+func GetCommentCount(c *core.Context) {
 	articleId, err := strconv.Atoi(c.DefaultQuery("article_id", "0"))
 	if err != nil {
 		panic(err)
 	}
-	data, err := comment.GetArticlesWebCommentCount(articleId)
+	count, err := new(entity.Comment).GetArticlesWebCommentCount(articleId)
 	if err != nil {
-		controller.Response(c, err, nil)
+		c.ErrorL("获取评论数量失败", articleId, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
-	controller.Response(c, nil, data.CommentCount)
-	return
+
+	c.Success(count)
 }

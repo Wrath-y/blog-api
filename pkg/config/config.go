@@ -1,9 +1,9 @@
 package config
 
 import (
+	"blog-api/pkg/def"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"go-blog/pkg/def"
 	"log"
 )
 

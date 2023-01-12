@@ -1,4 +1,4 @@
-module go-blog
+module blog-api
 
 go 1.19
 
@@ -14,7 +14,6 @@ require (
 	github.com/rs/zerolog v1.20.0
 	github.com/shirou/gopsutil v2.21.11+incompatible
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.2.1
 	github.com/xjh22222228/ip v1.0.1
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
@@ -44,6 +43,7 @@ require (
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cast v1.2.0 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
+	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/ugorji/go/codec v0.0.0-20180920200043-2c86ab75771c // indirect

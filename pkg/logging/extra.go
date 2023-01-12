@@ -1,8 +1,8 @@
 package logging
 
 import (
+	"blog-api/pkg/def"
 	"context"
-	"go-blog/pkg/def"
 )
 
 func FromContext(ctx context.Context) *logger {
