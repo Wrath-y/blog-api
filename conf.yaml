@@ -9,7 +9,7 @@ nacos:
   username: nacos
   password: nacos
   data_id: blog_api_conf.yaml
-  group: blog
+  group: DEFAULT_GROUP
   namespace_id: daa81bff-7255-4554-a66e-69d880ede774
   poll_time: 60
 redis:

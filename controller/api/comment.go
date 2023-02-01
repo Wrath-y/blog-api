@@ -4,6 +4,7 @@ import (
 	"blog-api/core"
 	"blog-api/entity"
 	"blog-api/errcode"
+	"blog-api/service/comment"
 	"encoding/json"
 	"strconv"
 	"time"
@@ -20,20 +21,26 @@ type CommentRequest struct {
 }
 
 func GetComments(c *core.Context) {
-	logMap := make(map[string]interface{})
-	lastId, err := strconv.Atoi(c.DefaultQuery("last_id", "1"))
+	var (
+		logMap = make(map[string]interface{})
+	)
+	lastId, err := strconv.Atoi(c.DefaultQuery("last_id", "0"))
 	if err != nil {
-		panic(err)
+		c.ErrorL("获取lastId失败", nil, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
+		return
 	}
 	logMap["lastId"] = lastId
 	articleId, err := strconv.Atoi(c.DefaultQuery("article_id", "0"))
 	if err != nil {
-		panic(err)
+		c.ErrorL("获取articleId失败", nil, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
+		return
 	}
 	logMap["articleId"] = articleId
-	list, err := new(entity.Comment).FindByArticleIdLastId(articleId, lastId, 15)
+	list, err := comment.FindByArticleIdLastId(c, articleId, lastId)
 	if err != nil {
-		c.ErrorL("获取评论失败", logMap, err.Error())
+		c.ErrorL("获取评论列表失败", nil, err.Error())
 		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
@@ -49,23 +56,23 @@ func AddComment(c *core.Context) {
 	}
 
 	jsonByte, _ := json.Marshal(r)
-	comment := new(entity.Comment)
-	err := json.Unmarshal(jsonByte, comment)
+	data := new(entity.Comment)
+	err := json.Unmarshal(jsonByte, data)
 	if err != nil {
 		c.ErrorL("反序列化失败", r, err.Error())
 		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
-	comment.CreatedAt = time.Now().In(c.TimeLocation)
-	comment.UpdatedAt = time.Now().In(c.TimeLocation)
-	if err := comment.Create(); err != nil {
-		c.ErrorL("添加评论失败", comment, err.Error())
+	data.CreatedAt = time.Now().In(c.TimeLocation)
+	data.UpdatedAt = time.Now().In(c.TimeLocation)
+	if err := data.Create(); err != nil {
+		c.ErrorL("添加评论失败", data, err.Error())
 		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
-	c.Success(comment)
+	c.Success(nil)
 }
 
 func GetCommentCount(c *core.Context) {
@@ -73,12 +80,14 @@ func GetCommentCount(c *core.Context) {
 	if err != nil {
 		panic(err)
 	}
-	count, err := new(entity.Comment).GetArticlesWebCommentCount(articleId)
+	count, err := comment.GetCommentCount(articleId)
 	if err != nil {
 		c.ErrorL("获取评论数量失败", articleId, err.Error())
 		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
 	}
 
-	c.Success(count)
+	c.Success(map[string]int64{
+		"count": count,
+	})
 }

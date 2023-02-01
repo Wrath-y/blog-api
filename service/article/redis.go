@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	ListStrKey          = "blog:api:article:list:%d"
-	SingleArticleStrKey = "blog:api:article:%d"
+	ListStrKey          = "blog:article:list:%d"
+	SingleArticleStrKey = "blog:article:%d"
 )
 
 func GetListByLastId(lastId int) ([]*resp2.GetArticlesResp, error) {

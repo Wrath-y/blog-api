@@ -34,7 +34,10 @@ func (*Comment) FindByArticleIdLastId(articleId, lastId, limit int) ([]*Comment,
 		limit = 6
 	}
 	var comments []*Comment
-	return comments, db.Orm.Raw("select * from comment where id > ? and article_id = ? limit ?", lastId, articleId, limit).Find(&comments).Error
+	if lastId == 0 {
+		return comments, db.Orm.Raw("select * from comment where article_id = ? order by id desc limit ?", articleId, limit).Find(&comments).Error
+	}
+	return comments, db.Orm.Raw("select * from comment where id < ? and article_id = ? order by id desc limit ?", lastId, articleId, limit).Find(&comments).Error
 }
 
 func (*Comment) GetArticlesWebCommentCounts(articleIds []int) ([]*ArticlesWebCommentCount, error) {
