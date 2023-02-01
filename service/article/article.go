@@ -13,7 +13,7 @@ func List(c *core.Context, lastId int) ([]*resp2.GetArticlesResp, error) {
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
-	if resp != nil && len(resp) > 0 {
+	if resp != nil {
 		return resp, nil
 	}
 
