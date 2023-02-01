@@ -1,26 +1,26 @@
 package article
 
 import (
-	resp2 "blog-api/controller/resp"
+	"blog-api/controller/resp"
 	"blog-api/core"
 	"blog-api/entity"
 	"github.com/go-redis/redis/v7"
 	"gorm.io/gorm"
 )
 
-func List(c *core.Context, lastId int) ([]*resp2.GetArticlesResp, error) {
-	resp, err := GetListByLastId(lastId)
+func List(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
+	list, err := GetListByLastId(lastId)
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
-	if resp != nil {
-		return resp, nil
+	if list != nil {
+		return list, nil
 	}
 
 	logMap := make(map[string]interface{})
 	defer func() {
-		if len(resp) > 0 {
-			_ = SetList(lastId, resp)
+		if len(list) > 0 {
+			_ = SetList(lastId, list)
 		}
 		c.Info("从DB获取文章列表", logMap, nil)
 	}()
@@ -30,7 +30,7 @@ func List(c *core.Context, lastId int) ([]*resp2.GetArticlesResp, error) {
 		return nil, err
 	}
 	logMap["articlesLen"] = len(articles)
-	resp = make([]*resp2.GetArticlesResp, 0, len(articles))
+	list = make([]*resp.GetArticlesResp, 0, len(articles))
 
 	articleIds := make([]int, 0, len(articles))
 	for _, v := range articles {
@@ -51,25 +51,25 @@ func List(c *core.Context, lastId int) ([]*resp2.GetArticlesResp, error) {
 	}
 
 	for _, v := range articles {
-		data := &resp2.GetArticlesResp{
+		data := &resp.GetArticlesResp{
 			Article: v,
 		}
 		if articleCommentCount, ok := articleCommentCountMap[v.Id]; ok {
 			data.CommentCount = articleCommentCount
 		}
-		resp = append(resp, data)
+		list = append(list, data)
 	}
 
-	return resp, nil
+	return list, nil
 }
 
-func Get(id int) (*resp2.GetArticlesResp, error) {
-	resp, err := GetById(id)
+func Get(id int) (*resp.GetArticlesResp, error) {
+	res, err := GetById(id)
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
-	if resp != nil && resp.Id > 0 {
-		return resp, nil
+	if res != nil && res.Id > 0 {
+		return res, nil
 	}
 
 	article, err := new(entity.Article).GetById(id)
@@ -78,17 +78,17 @@ func Get(id int) (*resp2.GetArticlesResp, error) {
 	}
 
 	defer func() {
-		_ = Set(id, resp)
+		_ = Set(id, res)
 	}()
 	comment, err := new(entity.Comment).GetArticlesWebCommentCount(article.Id)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
 
-	resp = &resp2.GetArticlesResp{
+	res = &resp.GetArticlesResp{
 		Article:      article,
 		CommentCount: comment,
 	}
 
-	return resp, nil
+	return res, nil
 }
