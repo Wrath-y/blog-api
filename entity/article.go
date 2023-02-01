@@ -28,9 +28,9 @@ type ArticlesWebIndex struct {
 func (*Article) FindByLastId(lastId, limit int) ([]*Article, error) {
 	var article []*Article
 	if lastId == 0 {
-		return article, db.Orm.Raw("select * from article where status = 1 limit ?", limit).Find(&article).Error
+		return article, db.Orm.Raw("select * from article where status = 1 order by id desc limit ?", limit).Find(&article).Error
 	}
-	return article, db.Orm.Raw("select * from article where id < ? and status = 1 limit ?", lastId, limit).Find(&article).Error
+	return article, db.Orm.Raw("select * from article where id < ? and status = 1 order by id desc limit ?", lastId, limit).Find(&article).Error
 }
 
 func (*Article) GetById(id int) (*Article, error) {
