@@ -7,7 +7,7 @@ app:
 nacos:
   address: http://localhost:8848
   username: nacos
-  password: qwe763zxc
+  password: nacos
   data_id: blog_api_conf.yaml
   group: blog
   namespace_id: daa81bff-7255-4554-a66e-69d880ede774

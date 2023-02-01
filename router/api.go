@@ -8,7 +8,7 @@ import (
 )
 
 func loadApi(r *gin.RouterGroup) {
-	a := r.Group("/", core.Handle(middleware.Logging), core.Handle(middleware.TimeLocation))
+	a := r.Group("/api", core.Handle(middleware.Logging), core.Handle(middleware.TimeLocation))
 	{
 		a.GET("/pixivs", core.Handle(api.GetPixivs))
 

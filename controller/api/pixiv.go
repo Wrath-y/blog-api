@@ -3,7 +3,7 @@ package api
 import (
 	"blog-api/core"
 	"blog-api/errcode"
-	"blog-api/server/pixivoss"
+	"blog-api/service/pixivoss"
 	"strconv"
 )
 

@@ -17,8 +17,8 @@ type Comment struct {
 }
 
 type ArticlesWebCommentCount struct {
-	ArticleId    int `json:"article_id"`
-	CommentCount int `json:"comment_count"`
+	ArticleId    int   `json:"article_id"`
+	CommentCount int64 `json:"comment_count"`
 }
 
 func (*Comment) TableName() string {
