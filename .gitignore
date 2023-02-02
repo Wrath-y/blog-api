@@ -18,7 +18,5 @@ vendor/
 bin/
 logs/
 
-conf.yaml
-
 supervisord.log
 supervisord.pid
