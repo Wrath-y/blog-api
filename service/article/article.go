@@ -9,17 +9,22 @@ import (
 )
 
 func List(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
-	list, err := GetListByLastId(lastId)
-	if err != nil && err != redis.Nil {
-		return nil, err
-	}
-	if list != nil {
-		return list, nil
+	list := make([]*resp.GetArticlesResp, 0)
+	logMap := make(map[string]interface{})
+	logMap["lastId"] = lastId
+	if lastId > 0 {
+		list, err := GetListByLastId(lastId)
+		if err != nil && err != redis.Nil {
+			return nil, err
+		}
+		if list != nil {
+			return list, nil
+		}
 	}
 
-	logMap := make(map[string]interface{})
 	defer func() {
 		if len(list) > 0 {
+			lastId = list[len(list)-1].Id
 			_ = SetList(lastId, list)
 		}
 		c.Info("从DB获取文章列表", logMap, nil)
@@ -30,7 +35,6 @@ func List(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
 		return nil, err
 	}
 	logMap["articlesLen"] = len(articles)
-	list = make([]*resp.GetArticlesResp, 0, len(articles))
 
 	articleIds := make([]int, 0, len(articles))
 	for _, v := range articles {
