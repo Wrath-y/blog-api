@@ -40,3 +40,7 @@ func GetCommentCountByArticleId(articleId int) (int64, error) {
 func SetCommentCount(articleId int, count int64) error {
 	return goredis.Client.Set(fmt.Sprintf(CountStrKey, articleId), count, time.Hour*24*7).Err()
 }
+
+func ClearCommentCache(articleId, lastId int) error {
+	return goredis.Client.Unlink(fmt.Sprintf(CountStrKey, articleId), fmt.Sprintf(ListStrKey, articleId, lastId)).Err()
+}

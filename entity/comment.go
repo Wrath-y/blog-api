@@ -9,11 +9,9 @@ type Comment struct {
 	Name      string `json:"name" gorm:"name"`
 	Email     string `json:"email" gorm:"email"`
 	Url       string `json:"url" gorm:"url"`
-	Type      int    `json:"type" gorm:"type"`
 	Content   string `json:"content" gorm:"content"`
 	ArticleId int    `json:"article_id" gorm:"article_id"`
 	Pid       int    `json:"pid" gorm:"pid"`
-	Ppid      int    `json:"ppid" gorm:"ppid"`
 }
 
 type ArticlesWebCommentCount struct {

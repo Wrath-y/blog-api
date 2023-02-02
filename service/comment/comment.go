@@ -9,18 +9,23 @@ import (
 )
 
 func FindByArticleIdLastId(c *core.Context, articleId, lastId int) ([]*resp.GetCommentsResp, error) {
+	list := make([]*resp.GetCommentsResp, 0)
 	logMap := make(map[string]interface{})
 	logMap["articleId"] = articleId
 	logMap["lastId"] = lastId
-	list, err := GetListByArticleIdLastId(articleId, lastId)
-	if err != nil && err != redis.Nil {
-		return nil, err
+	if lastId > 0 {
+		list, err := GetListByArticleIdLastId(articleId, lastId)
+		if err != nil && err != redis.Nil {
+			return nil, err
+		}
+		if list != nil {
+			return list, nil
+		}
 	}
-	if list != nil {
-		return list, nil
-	}
+
 	defer func() {
 		if len(list) > 0 {
+			lastId = list[len(list)-1].Id
 			_ = SetList(articleId, lastId, list)
 		}
 		c.Info("从DB获取文章列表", logMap, nil)
@@ -30,7 +35,6 @@ func FindByArticleIdLastId(c *core.Context, articleId, lastId int) ([]*resp.GetC
 		c.ErrorL("获取评论失败", logMap, err.Error())
 		return nil, err
 	}
-	list = make([]*resp.GetCommentsResp, 0, len(comments))
 
 	for _, v := range comments {
 		emailMd5Str := v.Email
@@ -38,14 +42,13 @@ func FindByArticleIdLastId(c *core.Context, articleId, lastId int) ([]*resp.GetC
 			v.Email = "empty"
 		}
 		data := &resp.GetCommentsResp{
+			Id:        v.Id,
 			Name:      v.Name,
 			Avatar:    "https://www.gravatar.com/avatar/" + util.EncryptMd5(emailMd5Str),
 			Url:       v.Url,
-			Type:      v.Type,
 			Content:   v.Content,
 			ArticleId: v.ArticleId,
 			Pid:       v.Pid,
-			Ppid:      v.Ppid,
 			CreatedAt: v.CreatedAt,
 		}
 		list = append(list, data)

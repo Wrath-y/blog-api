@@ -5,20 +5,9 @@ import (
 	"blog-api/entity"
 	"blog-api/errcode"
 	"blog-api/service/comment"
-	"encoding/json"
 	"strconv"
 	"time"
 )
-
-type CommentRequest struct {
-	ArticleId int    `json:"article_id" binding:"required"`
-	Content   string `json:"content" binding:"required"`
-	Email     string `json:"email" binding:"required"`
-	Name      string `json:"name" binding:"required"`
-	Pid       int    `json:"pid"`
-	Ppid      int    `json:"ppid"`
-	Url       string `json:"url" binding:"required"`
-}
 
 func GetComments(c *core.Context) {
 	var (
@@ -48,28 +37,47 @@ func GetComments(c *core.Context) {
 	c.Success(list)
 }
 
+type AddCommentRequest struct {
+	LastId    int    `json:"last_id" binding:"required"`
+	ArticleId int    `json:"article_id" binding:"required"`
+	Content   string `json:"content" binding:"required"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	Pid       int    `json:"pid"`
+	Url       string `json:"url"`
+}
+
 func AddComment(c *core.Context) {
-	var r CommentRequest
+	var r *AddCommentRequest
 	if err := c.ShouldBindJSON(&r); err != nil {
 		c.FailWithErrCode(errcode.WebInvalidParam, nil)
 		return
 	}
 
-	jsonByte, _ := json.Marshal(r)
-	data := new(entity.Comment)
-	err := json.Unmarshal(jsonByte, data)
-	if err != nil {
-		c.ErrorL("反序列化失败", r, err.Error())
-		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
-		return
+	if r.Name == "" {
+		r.Name = "匿名用户"
+	}
+	data := &entity.Comment{
+		Base: &entity.Base{
+			UpdatedAt: time.Now().In(c.TimeLocation),
+			CreatedAt: time.Now().In(c.TimeLocation),
+		},
+		Name:      r.Name,
+		Email:     r.Email,
+		Url:       r.Url,
+		Content:   r.Content,
+		ArticleId: r.ArticleId,
+		Pid:       r.Pid,
 	}
 
-	data.CreatedAt = time.Now().In(c.TimeLocation)
-	data.UpdatedAt = time.Now().In(c.TimeLocation)
 	if err := data.Create(); err != nil {
 		c.ErrorL("添加评论失败", data, err.Error())
 		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
 		return
+	}
+
+	if err := comment.ClearCommentCache(r.ArticleId, r.LastId); err != nil {
+		c.ErrorL("删除评论缓存失败", data, err.Error())
 	}
 
 	c.Success(nil)
