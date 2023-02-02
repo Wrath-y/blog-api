@@ -5,12 +5,12 @@ app:
     key: sys:log:list
     output: stdout
 nacos:
-  address: http://localhost:8848
-  username: nacos
-  password: nacos
+  address: http://nacos:8848
+  username: nacos_username
+  password: nacos_password
   data_id: blog_api_conf.yaml
   group: DEFAULT_GROUP
-  namespace_id: daa81bff-7255-4554-a66e-69d880ede774
+  namespace_id: nacos_namespace_id
   poll_time: 60
 redis:
   default:
