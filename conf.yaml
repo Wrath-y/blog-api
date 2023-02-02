@@ -5,7 +5,7 @@ app:
     key: sys:log:list
     output: stdout
 nacos:
-  address: http://nacos:8848
+  address: http://nacos_address:8848
   username: nacos_username
   password: nacos_password
   data_id: blog_api_conf.yaml
