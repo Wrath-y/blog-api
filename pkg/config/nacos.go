@@ -49,6 +49,7 @@ type NacosConfig struct {
 	Password    string
 	Logger      logger
 	PollTime    time.Duration
+	NeedInit    chan struct{}
 	api         *api
 }
 
@@ -202,6 +203,16 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 					n.Logger.Info(fmt.Sprintf("nacos listen refresh:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, contentMd5), nil, nil)
 					fn(ret)
 				}
+			case <-n.NeedInit:
+				ret, err := n.Get(namespace, group, dataId)
+				if err != nil {
+					n.Logger.ErrorL("获取配置失败", nil, err)
+					continue
+				}
+
+				contentMd5 = md5string(ret)
+				n.Logger.Info(fmt.Sprintf("nacos listen refresh:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, contentMd5), nil, nil)
+				fn(ret)
 			}
 		}
 	}()
