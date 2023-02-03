@@ -10,6 +10,7 @@ import (
 )
 
 var ErrInvalidConf = errors.New("nacos缺少必要配置")
+var HasInit = false
 
 const (
 	DefaultPollTime = 30 * time.Second
@@ -77,6 +78,9 @@ func ListenNacos(l logger, httpClient httpClient, callbacks ...func(cnf string))
 		c.Logger = l
 		c.HttpClient = httpClient
 	})
+
+	initConf(l, nacosConf, nacosParams)
+
 	nacosConf.ListenAsync(nacosParams.namespaceID, nacosParams.group, nacosParams.dataID, func(cnf string) {
 		l.Info("[nacos] 监听到配置文件有改变，开始获取", nacosParams, nil)
 
@@ -95,12 +99,31 @@ func ListenNacos(l logger, httpClient httpClient, callbacks ...func(cnf string))
 			l.ErrorL("[nacos] 更新配置文件失败: %s", nacosParams, err.Error())
 		}
 		l.Info("[nacos] 更新配置文件成功\n%s", nacosParams, content)
-
+		HasInit = true
 		// 执行callback
 		for _, callbackFunc := range callbacks {
 			callbackFunc(cnf)
 		}
 	})
+}
+
+func initConf(l logger, nacosConf *NacosConfig, nacosParams *nacosParams) {
+	content, err := nacosConf.Get(nacosParams.namespaceID, nacosParams.group, nacosParams.dataID)
+	if err != nil {
+		l.ErrorL("[nacos] 获取配置失败: %s", nacosParams, err.Error())
+		return
+	}
+	if content == "" {
+		l.ErrorL("[nacos] 获取到的配置为空", nacosParams, nil)
+		return
+	}
+
+	// 同步到本地配置文件，之后会被viper监听到并重新加载
+	if err := writeFile(DefaultRelationPath, content); err != nil {
+		l.ErrorL("[nacos] 更新配置文件失败: %s", nacosParams, err.Error())
+	}
+	l.Info("[nacos] 更新配置文件成功\n%s", nacosParams, content)
+	HasInit = true
 }
 
 func writeFile(configPath, configContent string) (err error) {
