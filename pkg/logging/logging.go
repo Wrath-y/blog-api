@@ -30,7 +30,7 @@ var (
 	mu         sync.Mutex
 	once       = &sync.Once{}
 	lastHandle *os.File
-	filePath   = "docs/log/wrath.cc/"
+	filePath   = "logs/"
 	current    = filePath + "access.log"
 	renameFmt  = filePath + "access.20060102150405.log"
 	logHandle  = &logrus.Logger{
