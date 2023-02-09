@@ -32,6 +32,17 @@ func GetArticles(c *core.Context) {
 	c.Success(resp)
 }
 
+func GetAllArticles(c *core.Context) {
+	resp, err := article.All(c, -1)
+	if err != nil {
+		c.ErrorL("获取所有文章失败", nil, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
+		return
+	}
+
+	c.Success(resp)
+}
+
 func GetArticle(c *core.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	res, err := article.Get(id)

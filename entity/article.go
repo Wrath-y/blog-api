@@ -30,6 +30,9 @@ func (*Article) FindByLastId(lastId, limit int) ([]*Article, error) {
 	if lastId == 0 {
 		return article, db.Orm.Raw("select * from article where status = 1 order by id desc limit ?", limit).Find(&article).Error
 	}
+	if lastId == -1 {
+		return article, db.Orm.Raw("select * from article where status = 1 order by id desc").Find(&article).Error
+	}
 	return article, db.Orm.Raw("select * from article where id < ? and status = 1 order by id desc limit ?", lastId, limit).Find(&article).Error
 }
 

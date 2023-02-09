@@ -11,11 +11,15 @@ func loadApi(r *gin.RouterGroup) {
 	a := r.Group("/api", core.Handle(middleware.Logging), core.Handle(middleware.TimeLocation))
 	{
 		a.GET("/pixivs", core.Handle(api.GetPixivs))
-		a.GET("friends", core.Handle(api.GetFriends))
+		a.GET("/friends", core.Handle(api.GetFriends))
 
-		ar := a.Group("articles")
+		ars := a.Group("articles")
 		{
-			ar.GET("", core.Handle(api.GetArticles))
+			ars.GET("", core.Handle(api.GetArticles))
+			ars.GET("/a", core.Handle(api.GetAllArticles))
+		}
+		ar := a.Group("article")
+		{
 			ar.GET("/:id", core.Handle(api.GetArticle))
 		}
 
