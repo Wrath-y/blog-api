@@ -26,14 +26,14 @@ var IP2LocationDB *ip2location.DB
 func setup() {
 	config.Setup()
 	// 监听nacos变化，发现变化后会自动同步到本地，同时杀掉当前进程（之后pod拉起）
-	//config.ListenNacos(logging.New(), httplib.NewClient(httplib.WithTimeout(30*time.Second)))
-	//for {
-	//	if config.HasInit {
-	//		break
-	//	}
-	//	println("wait for nacos sync")
-	//	time.Sleep(time.Second)
-	//}
+	config.ListenNacos(logging.New(), httplib.NewClient(httplib.WithTimeout(30*time.Second)))
+	for {
+		if config.HasInit {
+			break
+		}
+		println("wait for nacos sync")
+		time.Sleep(time.Second)
+	}
 	logging.Setup(viper.GetString("app.log.topic"), logger)
 	httplib.Setup(viper.GetString("app.log.topic"), logger)
 	db.Setup()
