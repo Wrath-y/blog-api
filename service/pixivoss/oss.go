@@ -5,15 +5,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-func List(nextMarker string, page int) (oss.ListObjectsResult, error) {
-	bucket, _ := Bucket()
-	marker := oss.Marker(nextMarker)
-	list, err := bucket.ListObjects(oss.MaxKeys(page), marker)
+func List(nextMarker string, page int) (*oss.ListObjectsResult, error) {
+	bucket, err := Bucket()
 	if err != nil {
-		return list, err
+		return nil, err
+	}
+	list, err := bucket.ListObjects(oss.Prefix("pixiv_img"), oss.MaxKeys(page), oss.Marker(nextMarker))
+	if err != nil {
+		return &list, err
 	}
 
-	return list, nil
+	return &list, nil
 }
 
 func Delete(name string) (int, error) {
