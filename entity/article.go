@@ -36,6 +36,11 @@ func (*Article) FindByLastId(lastId, limit int) ([]*Article, error) {
 	return article, db.Orm.Raw("select * from article where id < ? and status = 1 order by id desc limit ?", lastId, limit).Find(&article).Error
 }
 
+func (*Article) FindAll() ([]*Article, error) {
+	var article []*Article
+	return article, db.Orm.Raw("select * from article order by id desc").Find(&article).Error
+}
+
 func (*Article) GetById(id int) (*Article, error) {
 	article := new(Article)
 	return article, db.Orm.First(&article, id).Error

@@ -33,7 +33,7 @@ func GetArticles(c *core.Context) {
 }
 
 func GetAllArticles(c *core.Context) {
-	resp, err := article.All(c, -1)
+	resp, err := article.All(c)
 	if err != nil {
 		c.ErrorL("获取所有文章失败", nil, err.Error())
 		c.FailWithErrCode(errcode.WebNetworkBusy, nil)

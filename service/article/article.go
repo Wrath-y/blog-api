@@ -64,26 +64,11 @@ func List(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
 	return list, nil
 }
 
-func All(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
+func All(c *core.Context) ([]*resp.GetArticlesResp, error) {
 	list := make([]*resp.GetArticlesResp, 0)
 	logMap := make(map[string]interface{})
-	logMap["lastId"] = lastId
-	list, err := GetListByLastId(lastId)
-	if err != nil && err != redis.Nil {
-		return nil, err
-	}
-	if list != nil {
-		return list, nil
-	}
 
-	defer func() {
-		if len(list) > 0 {
-			_ = SetList(lastId, list)
-		}
-		c.Info("从DB获取文章列表", logMap, nil)
-	}()
-
-	articles, err := new(entity.Article).FindByLastId(lastId, 6)
+	articles, err := new(entity.Article).FindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +85,6 @@ func All(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
 		c.ErrorL("获取评论失败", logMap, err.Error())
 		return nil, err
 	}
-	logMap["commentCounts"] = commentCounts
 
 	articleCommentCountMap := make(map[int]int64)
 	for _, v := range commentCounts {
