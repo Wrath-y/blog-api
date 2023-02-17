@@ -85,7 +85,7 @@ func NewNacosConfig(options ...func(c *NacosConfig)) *NacosConfig {
 
 func (n *NacosConfig) login() error {
 	n.Logger.SetV3("login")
-	n.Logger.Info(fmt.Sprintf("nacos login server:[%s:%s]", n.ServerAddr, n.Username), nil, nil)
+	////n.Logger.Info(fmt.Sprintf("nacos login server:[%s:%s]", n.ServerAddr, n.Username), nil, nil)
 
 	v := url.Values{}
 	v.Add("username", n.Username)
@@ -126,7 +126,7 @@ func (n *NacosConfig) login() error {
 
 func (n *NacosConfig) Get(namespace, group, dataId string) (string, error) {
 	n.Logger.SetV3("Get")
-	n.Logger.Info(fmt.Sprintf("nacos get config:[namespace:%s,group:%s,dataId:%s]", namespace, group, dataId), nil, nil)
+	//n.Logger.Info(fmt.Sprintf("nacos get config:[namespace:%s,group:%s,dataId:%s]", namespace, group, dataId), nil, nil)
 
 	v := url.Values{}
 	v.Add("tenant", namespace)
@@ -200,7 +200,7 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 					}
 
 					contentMd5 = md5string(ret)
-					n.Logger.Info(fmt.Sprintf("nacos listen refresh:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, contentMd5), nil, nil)
+					//n.Logger.Info(fmt.Sprintf("nacos listen refresh:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, contentMd5), nil, nil)
 					fn(ret)
 				}
 			case <-n.NeedInit:
@@ -211,7 +211,7 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 				}
 
 				contentMd5 = md5string(ret)
-				n.Logger.Info(fmt.Sprintf("nacos listen refresh:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, contentMd5), nil, nil)
+				//n.Logger.Info(fmt.Sprintf("nacos listen refresh:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, contentMd5), nil, nil)
 				fn(ret)
 			}
 		}
@@ -219,7 +219,7 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 }
 
 func (n *NacosConfig) Listen(namespace, group, dataId, md5 string) (bool, error) {
-	n.Logger.Info(fmt.Sprintf("nacos listen start:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, md5), nil, nil)
+	//n.Logger.Info(fmt.Sprintf("nacos listen start:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, md5), nil, nil)
 
 	content := dataId + splitConfigInner + group + splitConfigInner + md5 + splitConfigInner + namespace + splitConfig
 
