@@ -26,7 +26,7 @@ var IP2LocationDB *ip2location.DB
 func setup() {
 	config.Setup()
 	// 监听nacos变化，发现变化后会自动同步到本地，同时杀掉当前进程（之后pod拉起）
-	config.ListenNacos(logging.New(), httplib.NewClient(httplib.WithTimeout(30*time.Second)))
+	config.ListenNacos(logging.New(), httplib.NewClient(httplib.WithTimeout(30*time.Second), httplib.WithTransport(httplib.NewClient(httplib.WithNoLog(true)))))
 	for {
 		if config.HasInit {
 			break

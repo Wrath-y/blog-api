@@ -31,16 +31,20 @@ type Context interface {
 }
 
 type Client struct {
-	Transport http.RoundTripper
+	Transport *Transport
 	Timeout   time.Duration
 	Context   Context
-	NoLog     bool
+}
+
+type Transport struct {
+	http.RoundTripper
+	NoLog bool
 }
 
 // NewClient 使用指定的options返回httplib.Client
 func NewClient(options ...Option) *Client {
 	c := &Client{
-		Transport: &Client{Transport: http.DefaultTransport},
+		Transport: &Transport{RoundTripper: http.DefaultTransport},
 		Timeout:   3 * time.Second,
 	}
 
@@ -59,16 +63,16 @@ func WithTimeout(timeout time.Duration) Option {
 }
 
 // WithTransport 指定http请求的transport, 默认为http.DefaultTransport
-func WithTransport(transport *http.Transport) Option {
+func WithTransport(transport http.RoundTripper) Option {
 	return func(c *Client) {
-		c.Transport = &Client{Transport: transport}
+		c.Transport.RoundTripper = transport
 	}
 }
 
 // WithNoLog 是否调用logger记录请求与响应报文
 func WithNoLog(noLog bool) Option {
 	return func(c *Client) {
-		c.NoLog = noLog
+		c.Transport.NoLog = noLog
 	}
 }
 
@@ -103,7 +107,7 @@ func Setup(t string, l Logger) {
 }
 
 func (c *Client) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	if logger == nil || c.NoLog {
+	if logger == nil || c.Transport.NoLog {
 		resp, err = c.Transport.RoundTrip(req)
 		return
 	}
