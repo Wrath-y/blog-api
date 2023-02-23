@@ -15,6 +15,10 @@ func Register() *gin.Engine {
 	r.Use(core.Handle(middleware.CORS))
 	r.NoRoute(NoRoute)
 
+	r.Any("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, nil)
+	})
+
 	g := r.Group("/")
 	loadApi(g)
 
