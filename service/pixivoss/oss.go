@@ -47,5 +47,5 @@ func Bucket() (*oss.Bucket, error) {
 		viper.GetString("aliyun.oss.access_keyid"),
 		viper.GetString("aliyun.oss.access_keysecret"))
 	// 获取存储空间。
-	return clientSer.Bucket(viper.GetString("aliyun.oss.bucket"))
+	return clientSer.Bucket(viper.GetString("aliyun.oss.bucket_pixiv"))
 }
