@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -76,6 +77,7 @@ func NewNacosConfig(options ...func(c *NacosConfig)) *NacosConfig {
 			listenApi: "/nacos/v1/cs/configs/listener",
 		}
 		if err := nc.login(); err != nil {
+			log.Fatal(nc.Username, nc.Password)
 			panic(err)
 		}
 	}
