@@ -10,7 +10,7 @@ func List(nextMarker string, page int) (*oss.ListObjectsResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	list, err := bucket.ListObjects(oss.Prefix("pixiv_img"), oss.MaxKeys(page), oss.Marker(nextMarker))
+	list, err := bucket.ListObjects(oss.MaxKeys(page), oss.Marker(nextMarker))
 	if err != nil {
 		return &list, err
 	}
