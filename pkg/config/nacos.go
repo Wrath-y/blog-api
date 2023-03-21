@@ -191,7 +191,7 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 			case <-t2.C:
 				update, err := n.Listen(namespace, group, dataId, contentMd5)
 				if err != nil {
-					n.Logger.ErrorL("监听配置失败", nil, err)
+					//n.Logger.ErrorL("监听配置失败", nil, err)
 					continue
 				}
 				if update {
