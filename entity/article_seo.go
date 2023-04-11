@@ -6,8 +6,9 @@ import (
 
 type ArticleSeo struct {
 	*Base
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	ArticleID int    `json:"article_id"`
+	Name      string `json:"name"`
+	Content   string `json:"content"`
 }
 
 func (*ArticleSeo) TableName() string {
