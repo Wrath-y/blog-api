@@ -22,6 +22,10 @@ func loadApi(r *gin.RouterGroup) {
 		{
 			ar.GET("/:id", core.Handle(api.GetArticle))
 		}
+		seo := a.Group("seo")
+		{
+			seo.GET("/:id", core.Handle(api.GetArticleSeo))
+		}
 
 		cm := a.Group("comments")
 		{
