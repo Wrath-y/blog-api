@@ -53,7 +53,13 @@ func List(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
 
 	for _, v := range articles {
 		data := &resp.GetArticlesResp{
-			Article: v,
+			ID:        v.Id,
+			Title:     v.Title,
+			Image:     v.Image,
+			Html:      v.Html,
+			Tags:      v.Tags,
+			Hits:      v.Hits,
+			CreatedAt: v.CreatedAt,
 		}
 		if articleCommentCount, ok := articleCommentCountMap[v.Id]; ok {
 			data.CommentCount = articleCommentCount
@@ -93,7 +99,13 @@ func All(c *core.Context) ([]*resp.GetArticlesResp, error) {
 
 	for _, v := range articles {
 		data := &resp.GetArticlesResp{
-			Article: v,
+			ID:        v.Id,
+			Title:     v.Title,
+			Image:     v.Image,
+			Html:      v.Html,
+			Tags:      v.Tags,
+			Hits:      v.Hits,
+			CreatedAt: v.CreatedAt,
 		}
 		if articleCommentCount, ok := articleCommentCountMap[v.Id]; ok {
 			data.CommentCount = articleCommentCount
@@ -109,7 +121,7 @@ func Get(id int) (*resp.GetArticlesResp, error) {
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
-	if res != nil && res.Id > 0 {
+	if res != nil && res.ID > 0 {
 		return res, nil
 	}
 
@@ -127,7 +139,13 @@ func Get(id int) (*resp.GetArticlesResp, error) {
 	}
 
 	res = &resp.GetArticlesResp{
-		Article:      article,
+		ID:           article.Id,
+		Title:        article.Title,
+		Image:        article.Image,
+		Html:         article.Html,
+		Tags:         article.Tags,
+		Hits:         article.Hits,
+		CreatedAt:    article.CreatedAt,
 		CommentCount: comment,
 	}
 

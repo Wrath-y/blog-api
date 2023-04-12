@@ -1,8 +1,14 @@
 package resp
 
-import "blog-api/entity"
+import "time"
 
 type GetArticlesResp struct {
-	*entity.Article
-	CommentCount int64 `json:"comment_count"`
+	ID           int       `json:"id"`
+	Title        string    `json:"title"`
+	Image        string    `json:"image"`
+	Html         string    `json:"html"`
+	Tags         string    `json:"tags"`
+	Hits         string    `json:"hits"`
+	CreatedAt    time.Time `json:"created_at"`
+	CommentCount int64     `json:"comment_count"`
 }
