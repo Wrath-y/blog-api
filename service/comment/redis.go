@@ -30,7 +30,7 @@ func SetList(articleId, lastId int, resp []*resp.GetCommentsResp) error {
 	if err != nil {
 		return err
 	}
-	return goredis.Client.Set(fmt.Sprintf(ListStrKey, articleId, lastId), string(b), time.Hour*24*7).Err()
+	return goredis.Client.Set(fmt.Sprintf(ListStrKey, articleId, lastId), string(b), time.Hour*24*180).Err()
 }
 
 func GetCommentCountByArticleId(articleId int) (int64, error) {
@@ -38,7 +38,7 @@ func GetCommentCountByArticleId(articleId int) (int64, error) {
 }
 
 func SetCommentCount(articleId int, count int64) error {
-	return goredis.Client.Set(fmt.Sprintf(CountStrKey, articleId), count, time.Hour*24*7).Err()
+	return goredis.Client.Set(fmt.Sprintf(CountStrKey, articleId), count, time.Hour*24*180).Err()
 }
 
 func ClearCommentCache(articleId, lastId int) error {

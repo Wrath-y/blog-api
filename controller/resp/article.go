@@ -8,7 +8,12 @@ type GetArticlesResp struct {
 	Image        string    `json:"image"`
 	Html         string    `json:"html"`
 	Tags         string    `json:"tags"`
-	Hits         string    `json:"hits"`
+	Hits         int64     `json:"hits"`
 	CreatedAt    time.Time `json:"created_at"`
 	CommentCount int64     `json:"comment_count"`
+}
+
+type GetArticleBaseInfoResp struct {
+	Hits         int64 `json:"hits"`
+	CommentCount int64 `json:"comment_count"`
 }

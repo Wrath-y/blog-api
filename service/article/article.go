@@ -4,8 +4,8 @@ import (
 	"blog-api/controller/resp"
 	"blog-api/core"
 	"blog-api/entity"
+	"blog-api/service/comment"
 	"github.com/go-redis/redis/v7"
-	"gorm.io/gorm"
 )
 
 func List(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
@@ -39,16 +39,20 @@ func List(c *core.Context, lastId int) ([]*resp.GetArticlesResp, error) {
 	}
 	logMap["articleIds"] = articleIds
 
-	commentCounts, err := new(entity.Comment).GetArticlesWebCommentCounts(articleIds)
-	if err != nil {
-		c.ErrorL("获取评论失败", logMap, err.Error())
-		return nil, err
+	commentCounts := make(map[int]int64)
+	for _, v := range articleIds {
+		commentCount, err := comment.GetCommentCount(v)
+		if err != nil {
+			logMap["cur_article_id"] = v
+			c.ErrorL("获取评论失败", logMap, err.Error())
+			commentCount = 0
+		}
+		commentCounts[v] = commentCount
 	}
-	logMap["commentCounts"] = commentCounts
 
 	articleCommentCountMap := make(map[int]int64)
-	for _, v := range commentCounts {
-		articleCommentCountMap[v.ArticleId] = v.CommentCount
+	for articleId, v := range commentCounts {
+		articleCommentCountMap[articleId] = v
 	}
 
 	for _, v := range articles {
@@ -86,15 +90,20 @@ func All(c *core.Context) ([]*resp.GetArticlesResp, error) {
 	}
 	logMap["articleIds"] = articleIds
 
-	commentCounts, err := new(entity.Comment).GetArticlesWebCommentCounts(articleIds)
-	if err != nil {
-		c.ErrorL("获取评论失败", logMap, err.Error())
-		return nil, err
+	commentCounts := make(map[int]int64)
+	for _, v := range articleIds {
+		commentCount, err := comment.GetCommentCount(v)
+		if err != nil {
+			logMap["cur_article_id"] = v
+			c.ErrorL("获取评论失败", logMap, err.Error())
+			commentCount = 0
+		}
+		commentCounts[v] = commentCount
 	}
 
 	articleCommentCountMap := make(map[int]int64)
-	for _, v := range commentCounts {
-		articleCommentCountMap[v.ArticleId] = v.CommentCount
+	for articleId, v := range commentCounts {
+		articleCommentCountMap[articleId] = v
 	}
 
 	for _, v := range articles {
@@ -133,10 +142,8 @@ func Get(id int) (*resp.GetArticlesResp, error) {
 	defer func() {
 		_ = Set(id, res)
 	}()
-	comment, err := new(entity.Comment).GetArticlesWebCommentCount(article.Id)
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, err
-	}
+
+	commentCount, _ := comment.GetCommentCount(id)
 
 	res = &resp.GetArticlesResp{
 		ID:           article.Id,
@@ -146,8 +153,18 @@ func Get(id int) (*resp.GetArticlesResp, error) {
 		Tags:         article.Tags,
 		Hits:         article.Hits,
 		CreatedAt:    article.CreatedAt,
-		CommentCount: comment,
+		CommentCount: commentCount,
 	}
 
 	return res, nil
+}
+
+func HitsIncr(id int) error {
+	if err := new(entity.Article).HitsIncr(id); err != nil {
+		return err
+	}
+	if err := CacheHitsIncr(id); err != nil {
+		return err
+	}
+	return nil
 }

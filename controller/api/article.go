@@ -52,5 +52,21 @@ func GetArticle(c *core.Context) {
 		return
 	}
 
+	if err := article.HitsIncr(id); err != nil {
+		c.ErrorL("增加文章热度失败", id, err.Error())
+	}
+
+	c.Success(res)
+}
+
+func GetArticleBaseInfo(c *core.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	res, err := article.GetBaseInfo(id)
+	if err != nil {
+		c.ErrorL("获取文章基本信息失败", id, err.Error())
+		c.FailWithErrCode(errcode.WebNetworkBusy, nil)
+		return
+	}
+
 	c.Success(res)
 }

@@ -29,5 +29,5 @@ func SetList(id int, resp []*resp2.GetArticleSeoResp) error {
 	if err != nil {
 		return err
 	}
-	return goredis.Client.Set(fmt.Sprintf(ListStrKey, id), string(b), time.Hour*24*7).Err()
+	return goredis.Client.Set(fmt.Sprintf(ListStrKey, id), string(b), time.Hour*24*180).Err()
 }

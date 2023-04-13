@@ -4,6 +4,7 @@ import (
 	"blog-api/core"
 	"blog-api/entity"
 	"blog-api/errcode"
+	"blog-api/service/article"
 	"blog-api/service/comment"
 	"strconv"
 	"time"
@@ -78,6 +79,10 @@ func AddComment(c *core.Context) {
 
 	if err := comment.ClearCommentCache(r.ArticleId, r.LastId); err != nil {
 		c.ErrorL("删除评论缓存失败", data, err.Error())
+	}
+
+	if err := article.CacheCommentCountIncr(r.ArticleId); err != nil {
+		c.ErrorL("评论数量缓存incr失败", data, err.Error())
 	}
 
 	c.Success(nil)

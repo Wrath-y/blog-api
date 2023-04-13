@@ -11,7 +11,7 @@ type Article struct {
 	Html   string `json:"html"`
 	Con    string `json:"con"`
 	Tags   string `json:"tags"`
-	Hits   string `json:"hits"`
+	Hits   int64  `json:"hits"`
 	Status int    `json:"status"`
 	Source int    `json:"source"`
 }
@@ -44,4 +44,13 @@ func (*Article) FindAll() ([]*Article, error) {
 func (*Article) GetById(id int) (*Article, error) {
 	article := new(Article)
 	return article, db.Orm.First(&article, id).Error
+}
+
+func (*Article) GetBaseInfoById(id int) (*Article, error) {
+	article := new(Article)
+	return article, db.Orm.Raw("select id, hits from article where id = ?", id).First(&article).Error
+}
+
+func (*Article) HitsIncr(id int) error {
+	return db.Orm.Exec("update article set hits = hits + 1 where id = ?", id).Error
 }
