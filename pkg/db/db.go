@@ -37,9 +37,14 @@ func NewMysqlDB(store string) *gorm.DB {
 
 	dsn := username + ":" + password + "@tcp(" + address + ")/" + database +
 		"?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=true&loc=Local&timeout=" + timeout + "s"
+
+	logLevel := glog.Silent
+	if viper.GetString("app.env") != def.EnvProduction {
+		logLevel = glog.Info
+	}
+
 	orm, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		//Logger: glog.Discard, // 不打印trace日志
-		Logger: &gormLog{glog.Discard}, // 打印trace日志
+		Logger: glog.Default.LogMode(logLevel),
 	})
 	if err != nil {
 		log.Fatal(err)
