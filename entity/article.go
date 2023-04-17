@@ -8,6 +8,7 @@ type Article struct {
 	*Base
 	Title  string `json:"title"`
 	Image  string `json:"image"`
+	Intro  string `json:"intro"`
 	Html   string `json:"html"`
 	Con    string `json:"con"`
 	Tags   string `json:"tags"`

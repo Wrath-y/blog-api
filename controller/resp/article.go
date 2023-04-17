@@ -7,6 +7,7 @@ type GetArticlesResp struct {
 	Title        string    `json:"title"`
 	Image        string    `json:"image"`
 	Html         string    `json:"html"`
+	Intro        string    `json:"intro"`
 	Tags         string    `json:"tags"`
 	Hits         int64     `json:"hits"`
 	CreatedAt    time.Time `json:"created_at"`
