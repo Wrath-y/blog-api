@@ -38,7 +38,7 @@ func loadNacosParams() (*nacosParams, error) {
 		dataID:      viper.GetString("nacos.data_id"),
 		group:       viper.GetString("nacos.group"),
 		namespaceID: viper.GetString("nacos.namespace_id"),
-		pollTime:    viper.GetDuration("nacos.poll_time"),
+		pollTime:    viper.GetDuration("nacos.poll_time") * time.Second,
 		timeout:     viper.GetDuration("nacos.timeout"),
 	}
 

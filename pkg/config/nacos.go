@@ -177,7 +177,10 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 
 	go func() {
 		t1 := time.NewTicker(time.Duration(n.tokenTTL) * time.Second)
-		t2 := time.NewTicker(n.PollTime * time.Second)
+		if n.PollTime.Seconds() < 1 {
+			n.PollTime = DefaultPollTime
+		}
+		t2 := time.NewTicker(n.PollTime)
 		for {
 			select {
 			// token到期刷新
