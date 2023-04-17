@@ -77,7 +77,7 @@ func NewNacosConfig(options ...func(c *NacosConfig)) *NacosConfig {
 			listenApi: "/nacos/v1/cs/configs/listener",
 		}
 		if err := nc.login(); err != nil {
-			log.Fatal(nc.Username, nc.Password)
+			log.Fatal("login err ", nc.Username, nc.Password)
 			panic(err)
 		}
 	}
@@ -177,7 +177,7 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 
 	go func() {
 		t1 := time.NewTicker(time.Duration(n.tokenTTL) * time.Second)
-		t2 := time.NewTicker(n.PollTime)
+		t2 := time.NewTicker(n.PollTime * time.Second)
 		for {
 			select {
 			// token到期刷新
@@ -212,7 +212,6 @@ func (n *NacosConfig) ListenAsync(namespace, group, dataId string, fn func(cnf s
 					continue
 				}
 
-				contentMd5 = md5string(ret)
 				//n.Logger.Info(fmt.Sprintf("nacos listen refresh:[namespace:%s,group:%s,dataId:%s,md5:%s]", namespace, group, dataId, contentMd5), nil, nil)
 				fn(ret)
 			}
