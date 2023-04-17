@@ -69,13 +69,14 @@ func Logging(c *core.Context) {
 		"request_uri": c.Request.RequestURI,
 	}
 
-	respBody := new(interface{})
+	respBody := ""
 	rawRespBody := w.body.Bytes()
-	if err := json.Unmarshal(rawRespBody, respBody); err != nil {
-		*respBody = string(rawRespBody)
+	respBody = string(rawRespBody)
+	if len(respBody) > 100 {
+		respBody = respBody[:100]
 	}
 
-	c.Info("接口请求与响应", request, *respBody, start)
+	c.Info("接口请求与响应", request, respBody, start)
 }
 
 func convertHTTPHeader(header http.Header) map[string]interface{} {
