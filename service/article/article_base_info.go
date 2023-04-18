@@ -12,7 +12,7 @@ func GetBaseInfo(id int) (*resp.GetArticleBaseInfoResp, error) {
 	if err != nil && err != redis.Nil {
 		return nil, err
 	}
-	if res != nil {
+	if res != nil && res.Hits != 0 {
 		return res, nil
 	}
 
